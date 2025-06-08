@@ -3,3 +3,6 @@ pub use basic::*;
 
 pub mod ssz;
 pub use ssz::*;
+
+pub mod error;
+pub use error::*;
