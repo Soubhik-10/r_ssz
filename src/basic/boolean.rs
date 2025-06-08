@@ -1,22 +1,28 @@
 //! Serialization and deserialization for boolean values.
 
-use crate::ssz::SimpleSerialize;
+use crate::{
+    SSZError::{self, *},
+    ssz::SimpleSerialize,
+};
 
 impl SimpleSerialize for bool {
     /// Serializes a boolean value.
-    fn serialize(&self) -> Vec<u8> {
-        if *self { vec![1] } else { vec![0] }
+    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
+        if *self { Ok(vec![1]) } else { Ok(vec![0]) }
     }
 
     /// Deserializes a boolean value.
-    fn deserialize(data: &[u8]) -> Self {
+    fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if data.len() != 1 {
-            panic!("Cannot deserialize boolean from empty data");
+            return Err(InvalidLength {
+                expected: 1,
+                got: data.len(),
+            });
         }
         match data[0] {
-            1 => true,
-            0 => false,
-            _ => panic!("Invalid byte for boolean deserialization"),
+            1 => Ok(true),
+            0 => Ok(false),
+            _ => Err(InvalidBooleanByte),
         }
     }
 }
@@ -27,22 +33,34 @@ mod tests {
 
     #[test]
     fn test_bool_serialize() {
-        assert_eq!(true.serialize(), vec![1]);
-        assert_eq!(false.serialize(), vec![0]);
+        assert_eq!(true.serialize(), Ok(vec![1]));
+        assert_eq!(false.serialize(), Ok(vec![0]));
     }
 
     #[test]
     fn test_bool_deserialize() {
-        assert_eq!(bool::deserialize(&[1]), true);
-        assert_eq!(bool::deserialize(&[0]), false);
+        assert_eq!(bool::deserialize(&[1]), Ok(true));
+        assert_eq!(bool::deserialize(&[0]), Ok(false));
         // Test panic on invalid byte
-        let result = std::panic::catch_unwind(|| bool::deserialize(&[2]));
-        assert!(result.is_err());
-        // Test panic on empty data
-        let result = std::panic::catch_unwind(|| bool::deserialize(&[]));
-        assert!(result.is_err());
-        // Test panic on data with more than one byte
-        let result = std::panic::catch_unwind(|| bool::deserialize(&[1, 0]));
-        assert!(result.is_err());
+        // Deserialize invalid byte
+        assert_eq!(bool::deserialize(&[2]), Err(SSZError::InvalidBooleanByte));
+
+        // Deserialize empty slice
+        assert_eq!(
+            bool::deserialize(&[]),
+            Err(SSZError::InvalidLength {
+                expected: 1,
+                got: 0
+            })
+        );
+
+        // Deserialize too many bytes
+        assert_eq!(
+            bool::deserialize(&[1, 0]),
+            Err(SSZError::InvalidLength {
+                expected: 1,
+                got: 2
+            })
+        );
     }
 }
