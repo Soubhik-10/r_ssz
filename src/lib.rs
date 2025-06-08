@@ -6,3 +6,6 @@ pub use ssz::*;
 
 pub mod error;
 pub use error::*;
+
+pub mod constants;
+pub use constants::*;
