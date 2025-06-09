@@ -92,7 +92,7 @@ impl SszTypeInfo for U256 {
 macro_rules! impl_uint_merkleize {
     ($type:ty, $bytes:expr) => {
         impl Merkleize for $type {
-            /// Returns true if the type is fixed-size.
+            /// returns `hash_tree_root` for uint
             fn hash_tree_root(&self) -> Result<B256, SSZError> {
                 let bytes = self.to_le_bytes();
                 let mut buf = [0u8; 32];
@@ -110,7 +110,7 @@ impl_uint_merkleize!(u64, 8);
 impl_uint_merkleize!(u128, 16);
 
 impl Merkleize for U256 {
-    /// Returns true if the type is fixed-size.
+    /// returns `hash_tree_root` for u256
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
         let bytes: [u8; BYTES] = self.to_le_bytes();
         let hash = B256::from_slice(&bytes);
@@ -120,6 +120,8 @@ impl Merkleize for U256 {
 
 #[cfg(test)]
 mod tests {
+    use alloy_primitives::hex;
+
     use super::*;
 
     #[test]
@@ -157,5 +159,60 @@ mod tests {
             let deserialized = u64::deserialize(&serialized).unwrap();
             assert_eq!(value, deserialized);
         }
+    }
+    #[test]
+    fn test_uint_hash_tree_root() {
+        // Test u8
+        let value_u8: u8 = 0xFF;
+        let root_u8 = value_u8.hash_tree_root().unwrap();
+        assert_eq!(
+            root_u8,
+            B256::from(hex!(
+                "ff00000000000000000000000000000000000000000000000000000000000000"
+            ))
+        );
+
+        // Test u16
+        let value_u16: u16 = 0xFFFF;
+        let root_u16 = value_u16.hash_tree_root().unwrap();
+        assert_eq!(
+            root_u16,
+            B256::from(hex!(
+                "ffff000000000000000000000000000000000000000000000000000000000000"
+            ))
+        );
+
+        // Test u32
+        let value_u32: u32 = 0xFFFFFFFF;
+        let root_u32 = value_u32.hash_tree_root().unwrap();
+        assert_eq!(
+            root_u32,
+            B256::from(hex!(
+                "ffffffff00000000000000000000000000000000000000000000000000000000"
+            ))
+        );
+
+        // Test U256
+        let value_u256 = U256::MAX;
+        let root_u256 = value_u256.hash_tree_root().unwrap();
+        assert_eq!(
+            root_u256,
+            B256::from(hex!(
+                "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+            ))
+        );
+    }
+
+    #[test]
+    fn test_uint_hash_tree_root_zero() {
+        // Test zero values are properly padded
+        let zero_u64 = 0u64;
+        let root = zero_u64.hash_tree_root().unwrap();
+        assert_eq!(
+            root,
+            B256::from(hex!(
+                "0000000000000000000000000000000000000000000000000000000000000000"
+            ))
+        );
     }
 }
