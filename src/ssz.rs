@@ -1,6 +1,7 @@
 //! This module provides a simple serialization and deserialization mechanism for data structures.
 
 use crate::SSZError;
+use alloy_primitives::B256;
 
 /// The `SimpleSerialize` trait defines methods for serializing and deserializing data structures
 pub trait SimpleSerialize: Sized {
@@ -16,4 +17,18 @@ pub trait SszTypeInfo {
     /// If None, then it's variable-size (e.g. Vec<u8>, String, etc).
     fn is_fixed_size() -> bool;
     fn fixed_size() -> Option<usize>;
+}
+
+/// Merkleization trait for SSZ types
+pub trait Merkleize {
+    /// Calculate the hash tree root of this value
+    fn hash_tree_root(&self) -> Result<B256, SSZError>;
+
+    /// Get the chunk count for merkleization
+    fn chunk_count() -> usize
+    where
+        Self: Sized,
+    {
+        1 // Default for basic types
+    }
 }
