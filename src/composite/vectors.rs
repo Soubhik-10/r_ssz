@@ -188,8 +188,8 @@ mod tests {
         // Example vector of Vec<u8> (variable size)
         let v: Vec<Vec<u8>> = vec![vec![1, 2], vec![3, 4, 5], vec![6]];
         let serialized = v.serialize().expect("serialize variable size vec");
-        print!("Normal: {:?}", v);
-        print!("Serialized: {:?}", serialized);
+        print!("Normal: {v:?}");
+        print!("Serialized: {serialized:?}");
         let deserialized =
             Vec::<Vec<u8>>::deserialize(&serialized).expect("deserialize variable size vec");
         assert_eq!(v, deserialized);

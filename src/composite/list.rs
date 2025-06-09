@@ -118,10 +118,7 @@ where
                 elements.push(elem);
             }
             elements
-                .iter()
-                .cloned()
-                .into_iter()
-                .collect::<Vec<T>>()
+                .to_vec()
                 .try_into()
                 .map_err(|_| SSZError::InvalidLength {
                     expected: N,
@@ -163,12 +160,12 @@ mod tests {
     #[test]
     fn test_some_arrays() {
         let a = [22u8; 3];
-        let serialized_a = (&a).serialize().unwrap();
+        let serialized_a = a.serialize().unwrap();
         let recovered_a = <[u8; 3]>::deserialize(&serialized_a).unwrap();
         assert_eq!(a, recovered_a);
 
         let a = [22u8; 333];
-        let serialized_a = (&a).serialize().unwrap();
+        let serialized_a = a.serialize().unwrap();
         let recovered_a = <[u8; 333]>::deserialize(&serialized_a).unwrap();
         assert_eq!(a, recovered_a);
     }
