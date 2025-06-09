@@ -1,5 +1,6 @@
 //! Serialization and deserialzation for uint values.
 
+use crate::SszTypeInfo;
 use crate::constants::BYTES;
 use crate::{SSZError, SimpleSerialize};
 use alloy_primitives::U256;
@@ -42,15 +43,49 @@ impl SimpleSerialize for U256 {
 
     /// Implements the deserialization trait for U256.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
-        if data.len() != 32 {
+        if data.len() != BYTES {
             return Err(SSZError::InvalidLength {
-                expected: 32,
+                expected: BYTES,
                 got: data.len(),
             });
         }
-        let mut bytes = [0u8; 32];
+        let mut bytes = [0u8; BYTES];
         bytes.copy_from_slice(data);
         Ok(U256::from_le_bytes(bytes))
+    }
+}
+
+macro_rules! impl_uint_typeinfo {
+    ($type:ty, $bytes:expr) => {
+        impl SszTypeInfo for $type {
+            /// Returns true if the type is fixed-size.
+            fn is_fixed_size() -> bool {
+                true
+            }
+
+            /// Returns the fixed size in bytes.
+            fn fixed_size() -> Option<usize> {
+                Some($bytes)
+            }
+        }
+    };
+}
+
+impl_uint_typeinfo!(u8, 1);
+impl_uint_typeinfo!(u16, 2);
+impl_uint_typeinfo!(u32, 4);
+impl_uint_typeinfo!(u64, 8);
+impl_uint_typeinfo!(u128, 16);
+
+impl SszTypeInfo for U256 {
+    /// Returns true if the type is fixed-size.
+    fn is_fixed_size() -> bool {
+        true
+    }
+
+    /// Returns the fixed size in bytes.
+    fn fixed_size() -> Option<usize> {
+        Some(BYTES)
     }
 }
 

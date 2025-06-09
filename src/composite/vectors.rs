@@ -1,0 +1,206 @@
+//! Serialization and deserialzation for vectors.
+
+use crate::{
+    SSZError::{self},
+    SszTypeInfo,
+    ssz::SimpleSerialize,
+};
+use alloc::vec::Vec;
+
+impl<T> SszTypeInfo for Vec<T>
+where
+    T: SszTypeInfo,
+{
+    fn is_fixed_size() -> bool {
+        false
+    }
+
+    fn fixed_size() -> Option<usize> {
+        None
+    }
+}
+
+impl<T> SimpleSerialize for Vec<T>
+where
+    T: SimpleSerialize + SszTypeInfo,
+{
+    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
+        if T::is_fixed_size() {
+            // Fixed-size elements: concatenate serialized items directly
+            let mut out = Vec::with_capacity(self.len() * T::fixed_size().unwrap());
+            for item in self {
+                out.extend(item.serialize()?);
+            }
+            Ok(out)
+        } else {
+            // Variable-size elements: serialize with offsets prefix (SSZ variable vector)
+            // 1. Serialize fixed parts (offsets)
+            // 2. Serialize variable parts (actual data)
+            let mut fixed_parts = Vec::with_capacity(self.len());
+            let mut variable_parts = Vec::with_capacity(self.len());
+            let mut fixed_lengths = Vec::with_capacity(self.len());
+            let mut variable_lengths = Vec::with_capacity(self.len());
+
+            // First, serialize all elements
+            for item in self {
+                let serialized = item.serialize()?;
+                if T::is_fixed_size() {
+                    // fixed_parts contain serialized item, variable part empty
+                    fixed_parts.push(Some(serialized.clone()));
+                    variable_parts.push(Vec::new());
+                    fixed_lengths.push(serialized.len());
+                    variable_lengths.push(0);
+                } else {
+                    // For variable size, fixed_parts is offset placeholder (None for now)
+                    fixed_parts.push(None);
+                    variable_parts.push(serialized.clone());
+                    fixed_lengths.push(crate::BYTES_PER_LENGTH_OFFSET); // offset length
+                    variable_lengths.push(serialized.len());
+                }
+            }
+
+            // Calculate offsets for variable parts
+            let mut variable_offsets = Vec::with_capacity(self.len());
+            let mut offset_acc = fixed_lengths.iter().sum::<usize>();
+            for len in &variable_lengths {
+                variable_offsets.push(offset_acc);
+                offset_acc += len;
+            }
+
+            // Replace None in fixed_parts with serialized offsets
+            let fixed_parts: Vec<Vec<u8>> = fixed_parts
+                .into_iter()
+                .enumerate()
+                .map(|(i, part)| {
+                    part.unwrap_or_else(|| (variable_offsets[i] as u32).to_le_bytes().to_vec())
+                })
+                .collect();
+
+            // Concatenate fixed parts + variable parts
+            let mut out = Vec::with_capacity(offset_acc);
+            for part in fixed_parts.iter() {
+                out.extend(part);
+            }
+            for part in variable_parts.iter() {
+                out.extend(part);
+            }
+
+            Ok(out)
+        }
+    }
+
+    fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
+        if T::is_fixed_size() {
+            let elem_size = T::fixed_size().ok_or(SSZError::InvalidLength {
+                expected: 0,
+                got: data.len(),
+            })?;
+
+            if data.len() % elem_size != 0 {
+                return Err(SSZError::InvalidLength {
+                    expected: elem_size,
+                    got: data.len(),
+                });
+            }
+
+            let count = data.len() / elem_size;
+            let mut result = Vec::with_capacity(count);
+
+            for i in 0..count {
+                let start = i * elem_size;
+                let end = start + elem_size;
+                let elem_data = &data[start..end];
+                let elem = T::deserialize(elem_data)?;
+                result.push(elem);
+            }
+
+            Ok(result)
+        } else {
+            const OFFSET_SIZE: usize = crate::BYTES_PER_LENGTH_OFFSET;
+
+            if data.len() < OFFSET_SIZE {
+                return Err(SSZError::InvalidLength {
+                    expected: OFFSET_SIZE,
+                    got: data.len(),
+                });
+            }
+
+            // Read offsets first
+            let mut offsets = Vec::new();
+            let mut i = 0;
+            while i + OFFSET_SIZE <= data.len() {
+                let offset_bytes = &data[i..i + OFFSET_SIZE];
+                let offset = u32::from_le_bytes(offset_bytes.try_into().unwrap()) as usize;
+                if offset > data.len() {
+                    return Err(SSZError::OffsetOutOfBounds);
+                }
+                offsets.push(offset);
+                i += OFFSET_SIZE;
+
+                // Heuristic: stop when the next offset would start after the first offset
+                if i >= offsets[0] {
+                    break;
+                }
+            }
+
+            let count = offsets.len();
+            let mut result = Vec::with_capacity(count);
+
+            for j in 0..count {
+                let start = offsets[j];
+                let end = if j + 1 < count {
+                    offsets[j + 1]
+                } else {
+                    data.len()
+                };
+
+                if start > end || end > data.len() {
+                    return Err(SSZError::InvalidOffsetRange { start, end });
+                }
+
+                let elem_data = &data[start..end];
+                let elem = T::deserialize(elem_data)?;
+                result.push(elem);
+            }
+
+            Ok(result)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ssz::SimpleSerialize;
+
+    #[test]
+    fn test_vec_fixed_size_serialization() {
+        // Example vector of u16 (fixed size)
+        let v: Vec<u16> = vec![1, 2, 3, 4];
+        let serialized = v.serialize().expect("serialize fixed size vec");
+        let deserialized =
+            Vec::<u16>::deserialize(&serialized).expect("deserialize fixed size vec");
+        assert_eq!(v, deserialized);
+    }
+
+    #[test]
+    fn test_vec_variable_size_serialization() {
+        // Example vector of Vec<u8> (variable size)
+        let v: Vec<Vec<u8>> = vec![vec![1, 2], vec![3, 4, 5], vec![6]];
+        let serialized = v.serialize().expect("serialize variable size vec");
+        print!("Normal: {:?}", v);
+        print!("Serialized: {:?}", serialized);
+        let deserialized =
+            Vec::<Vec<u8>>::deserialize(&serialized).expect("deserialize variable size vec");
+        assert_eq!(v, deserialized);
+    }
+
+    #[test]
+    fn test_vec_empty() {
+        let v: Vec<u8> = Vec::new();
+        let serialized = v.serialize().expect("serialize empty vec");
+        let deserialized = Vec::<u8>::deserialize(&serialized).expect("deserialize empty vec");
+        assert_eq!(v, deserialized);
+        assert!(serialized.is_empty());
+    }
+}
