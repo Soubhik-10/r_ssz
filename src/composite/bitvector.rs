@@ -1,10 +1,16 @@
 // ! Serialization and deserialization for BitVector
 
-use crate::{SSZError, SimpleSerialize};
+use crate::{SSZError, SimpleSerialize, SszTypeInfo};
 
 #[derive(Debug, PartialEq)]
 pub struct BitVector<const N: usize> {
     bits: Vec<bool>,
+}
+
+impl<const N: usize> Default for BitVector<N> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<const N: usize> BitVector<N> {
@@ -26,10 +32,22 @@ impl<const N: usize> BitVector<N> {
     }
 }
 
+impl<const N: usize> SszTypeInfo for BitVector<N> {
+    /// Indicates that the bit vector is fixed-size.
+    fn is_fixed_size() -> bool {
+        true
+    }
+
+    /// Returns the fixed size of the bit vector in bytes.
+    fn fixed_size() -> Option<usize> {
+        Some(N.div_ceil(8))
+    }
+}
+
 impl<const N: usize> SimpleSerialize for BitVector<N> {
     /// Serializes a  bit vector.
     fn serialize(&self) -> Result<Vec<u8>, SSZError> {
-        let byte_length = (N + 7) / 8;
+        let byte_length = N.div_ceil(8);
         let mut bytes = vec![0u8; byte_length];
 
         for (i, &bit) in self.bits.iter().enumerate() {
@@ -43,7 +61,7 @@ impl<const N: usize> SimpleSerialize for BitVector<N> {
 
     /// Deserializes a bit vector.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
-        let expected_bytes = (N + 7) / 8;
+        let expected_bytes = N.div_ceil(8);
         if data.len() != expected_bytes {
             return Err(SSZError::InvalidLength {
                 expected: expected_bytes,

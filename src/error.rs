@@ -9,8 +9,13 @@ pub enum SSZError {
     #[error("Invalid byte for boolean deserialization")]
     InvalidBooleanByte,
 
+
     #[error("Invalid byte length : expected {expected}, got {got}")]
     InvalidByteLength { expected: usize, got: usize },
+
+    #[error("Invalid byte for deserialization")]
+    InvalidByte,
+
 
     #[error("Deserialization error: {0}")]
     DeserializationError(String),
