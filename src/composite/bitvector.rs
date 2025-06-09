@@ -1,6 +1,6 @@
 // ! Serialization and deserialization for BitVector
 
-use crate::{SSZError, SimpleSerialize};
+use crate::{SSZError, SimpleSerialize, SszTypeInfo};
 
 #[derive(Debug, PartialEq)]
 pub struct BitVector<const N: usize> {
@@ -23,6 +23,18 @@ impl<const N: usize> BitVector<N> {
         }
         self.bits[index] = value;
         Ok(())
+    }
+}
+
+impl<const N: usize> SszTypeInfo for BitVector<N> {
+    /// Indicates that the bit vector is fixed-size.
+    fn is_fixed_size() -> bool {
+        true
+    }
+
+    /// Returns the fixed size of the bit vector in bytes.
+    fn fixed_size() -> Option<usize> {
+        Some((N + 7) / 8)
     }
 }
 
