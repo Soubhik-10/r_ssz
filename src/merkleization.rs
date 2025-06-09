@@ -78,14 +78,14 @@ pub mod merkleization {
     pub fn mix_in_length(root: B256, length: usize) -> B256 {
         let mut hasher = Sha256::new();
         hasher.update(root.as_slice());
-        hasher.update(&(length as u64).to_le_bytes());
+        hasher.update((length as u64).to_le_bytes());
         B256::from_slice(&hasher.finalize())
     }
     /// Mix in selector with a root
     pub fn mix_in_selector(root: B256, selector: u8) -> B256 {
         let mut hasher = Sha256::new();
         hasher.update(root.as_slice());
-        hasher.update(&[selector]);
+        hasher.update([selector]);
         B256::from_slice(&hasher.finalize())
     }
 }
