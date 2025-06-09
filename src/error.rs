@@ -9,11 +9,17 @@ pub enum SSZError {
     #[error("Invalid byte for boolean deserialization")]
     InvalidBooleanByte,
 
+    #[error("Invalid byte length : expected {expected}, got {got}")]
+    InvalidByteLength { expected: usize, got: usize },
+
     #[error("Deserialization error: {0}")]
     DeserializationError(String),
 
     #[error("Serialization error: {0}")]
     SerializationError(String),
+
+    #[error("Expected delimiter bit not found")]
+    ExpectedDelimiterBit,
 
     #[error("Offset out of bounds for data length")]
     OffsetOutOfBounds,
