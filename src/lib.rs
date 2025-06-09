@@ -1,3 +1,5 @@
+extern crate alloc;
+
 pub mod basic;
 pub use basic::*;
 

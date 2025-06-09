@@ -9,3 +9,11 @@ pub trait SimpleSerialize: Sized {
     /// Deserializes the data structure from a byte slice.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError>;
 }
+
+/// The `SszTypeInfo` trait provides information about the size characteristics of a type.
+pub trait SszTypeInfo {
+    /// If Some(size), then type is fixed-size with known size in bytes.
+    /// If None, then it's variable-size (e.g. Vec<u8>, String, etc).
+    fn is_fixed_size() -> bool;
+    fn fixed_size() -> Option<usize>;
+}
