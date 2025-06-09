@@ -90,7 +90,7 @@ mod tests {
             })
         );
     }
-    
+
     #[test]
     fn test_bool_roundtrip() {
         // Test roundtrip for true
