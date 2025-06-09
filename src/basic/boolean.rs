@@ -56,6 +56,8 @@ impl Merkleize for bool {
 
 #[cfg(test)]
 mod tests {
+    use alloy_primitives::hex::FromHex;
+
     use super::*;
 
     #[test]
@@ -104,5 +106,26 @@ mod tests {
         let serialized = original_false.serialize().expect("can serialize false");
         let recovered_false = bool::deserialize(&serialized).expect("can deserialize false");
         assert_eq!(original_false, recovered_false);
+    }
+    #[test]
+    fn test_bool_hash_tree_root() {
+        // Test true value
+        let root_true = true.hash_tree_root().expect("can merkleize true");
+        assert_eq!(
+            root_true,
+            B256::from_hex("0100000000000000000000000000000000000000000000000000000000000000")
+                .expect("valid hex")
+        );
+
+        // Test false value
+        let root_false = false.hash_tree_root().expect("can merkleize false");
+        assert_eq!(
+            root_false,
+            B256::from_hex("0000000000000000000000000000000000000000000000000000000000000000")
+                .expect("valid hex")
+        );
+
+        // Verify roots are different
+        assert_ne!(root_true, root_false);
     }
 }
