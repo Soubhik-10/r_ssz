@@ -2,6 +2,7 @@
 
 use crate::{
     SSZError::{self, *},
+    SszTypeInfo,
     ssz::SimpleSerialize,
 };
 
@@ -24,6 +25,18 @@ impl SimpleSerialize for bool {
             0 => Ok(false),
             _ => Err(InvalidBooleanByte),
         }
+    }
+}
+
+impl SszTypeInfo for bool {
+    /// Indicates that the boolean type is fixed-size.
+    fn is_fixed_size() -> bool {
+        true
+    }
+
+    /// Returns the fixed size of a boolean value in bytes.
+    fn fixed_size() -> Option<usize> {
+        Some(1)
     }
 }
 
