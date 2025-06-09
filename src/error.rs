@@ -30,6 +30,12 @@ pub enum SSZError {
     #[error("Invalid offset range: start {start} is greater than end {end}")]
     InvalidOffsetRange { start: usize, end: usize },
 
+    #[error("Invalid Chunk Size")]
+    InvalidChunkSize,
+
+    #[error("Invalid Chunk Count: limit {limit}, got {count}")]
+    ChunkCountExceedsLimit { count: usize, limit: usize },
+
     #[error("Unknown error occurred")]
     Unknown,
 }
