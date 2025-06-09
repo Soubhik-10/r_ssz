@@ -5,8 +5,6 @@ pub use bitvector::*;
 
 pub mod vectors;
 
-pub use vectors::*;
-
 pub mod bitlist;
 pub use bitlist::*;
 

@@ -77,7 +77,7 @@ impl<const N: usize> SimpleSerialize for BitList<N> {
             });
         }
 
-        let byte_len = (bit_len + 7) / 8 + 1;
+        let byte_len = bit_len.div_ceil(8) + 1;
         let mut bytes = vec![0u8; byte_len];
 
         for (i, &bit) in self.bits.iter().enumerate() {
@@ -150,14 +150,14 @@ mod tests {
     #[test]
     fn test_bitlist_serialize() {
         let value: BitList<10> = BitList::default();
-        let encoding = (&value).serialize().expect("can encode");
+        let encoding = (value).serialize().expect("can encode");
         let expected = [1u8];
         assert_eq!(encoding, expected);
 
         let mut value: BitList<32> = BitList::default();
         let _ = value.push(false);
         let _ = value.push(true);
-        let encoding = (&value).serialize().expect("can encode");
+        let encoding = (value).serialize().expect("can encode");
         let expected = [6u8, 0u8];
         assert_eq!(encoding, expected);
 
@@ -171,7 +171,7 @@ mod tests {
         let _ = value.push(false);
         let _ = value.push(false);
 
-        let encoding = (&value).serialize().expect("can encode");
+        let encoding = (value).serialize().expect("can encode");
         let expected = [24u8, 1u8];
         assert_eq!(encoding, expected);
     }
