@@ -90,4 +90,19 @@ mod tests {
             })
         );
     }
+
+    #[test]
+    fn test_bool_roundtrip() {
+        // Test roundtrip for true
+        let original_true = true;
+        let serialized = original_true.serialize().expect("can serialize true");
+        let recovered_true = bool::deserialize(&serialized).expect("can deserialize true");
+        assert_eq!(original_true, recovered_true);
+
+        // Test roundtrip for false
+        let original_false = false;
+        let serialized = original_false.serialize().expect("can serialize false");
+        let recovered_false = bool::deserialize(&serialized).expect("can deserialize false");
+        assert_eq!(original_false, recovered_false);
+    }
 }
