@@ -1,6 +1,9 @@
 pub mod basic;
 pub use basic::*;
 
+pub mod composite;
+pub use composite::*;
+
 pub mod ssz;
 pub use ssz::*;
 
