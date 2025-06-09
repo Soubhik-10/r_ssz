@@ -185,6 +185,64 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_bitlist_edge_cases() {
+        // Test empty bitlist
+        let empty: BitList<32> = BitList::default();
+        assert_eq!(empty.len(), 0);
+        assert!(empty.is_empty());
+
+        // Serialization of empty bitlist should work
+        let encoding = empty.serialize().expect("can encode empty");
+        assert_eq!(encoding, vec![1]); // Just delimiter bit
+
+        // Deserialization of empty bitlist should work
+        let decoded = BitList::<32>::deserialize(&[1]).expect("can decode empty");
+        assert_eq!(decoded, empty);
+
+        // Test exceeding max length during push
+        let mut list = BitList::<3>::default();
+        list.push(true).unwrap();
+        list.push(false).unwrap();
+        list.push(true).unwrap();
+        assert_eq!(list.len(), 3);
+
+        // Pushing beyond limit should fail
+        let result = list.push(true);
+        assert!(matches!(
+            result,
+            Err(SSZError::InvalidLength {
+                expected: 3,
+                got: 4
+            })
+        ));
+
+        // Test exceeding max length during creation
+        let too_many_bits = vec![true; 4];
+        let result = BitList::<3>::from_vec(too_many_bits);
+        assert!(matches!(
+            result,
+            Err(SSZError::InvalidLength {
+                expected: 3,
+                got: 4
+            })
+        ));
+
+        // Test deserializing invalid data
+        let result = BitList::<32>::deserialize(&[]);
+        assert!(matches!(
+            result,
+            Err(SSZError::InvalidLength {
+                expected: 1,
+                got: 0
+            })
+        ));
+
+        // Test deserializing data without delimiter bit
+        let result = BitList::<32>::deserialize(&[0]);
+        assert!(matches!(result, Err(SSZError::OffsetOutOfBounds)));
+    }
+
+    #[test]
     fn test_bitlist_serialize() {
         let value: BitList<10> = BitList::default();
         let encoding = (value).serialize().expect("can encode");
