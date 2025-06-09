@@ -1,6 +1,9 @@
 //! Serialization and deserialization for boolean values.
 
+use alloy_primitives::B256;
+
 use crate::{
+    Merkleize,
     SSZError::{self, *},
     SszTypeInfo,
     ssz::SimpleSerialize,
@@ -37,6 +40,17 @@ impl SszTypeInfo for bool {
     /// Returns the fixed size of a boolean value in bytes.
     fn fixed_size() -> Option<usize> {
         Some(1)
+    }
+}
+
+impl Merkleize for bool {
+    /// Calculates the hash tree root of a boolean value.
+    fn hash_tree_root(&self) -> Result<B256, SSZError> {
+        let mut hash = B256::default();
+        if *self {
+            hash[0] = 1;
+        }
+        Ok(hash)
     }
 }
 

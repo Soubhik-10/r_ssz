@@ -1,8 +1,10 @@
 //! Serialization and deserialzation for uint values.
 
+use crate::Merkleize;
 use crate::SszTypeInfo;
 use crate::constants::BYTES;
 use crate::{SSZError, SimpleSerialize};
+use alloy_primitives::B256;
 use alloy_primitives::U256;
 
 macro_rules! impl_uint {
@@ -70,7 +72,6 @@ macro_rules! impl_uint_typeinfo {
         }
     };
 }
-
 impl_uint_typeinfo!(u8, 1);
 impl_uint_typeinfo!(u16, 2);
 impl_uint_typeinfo!(u32, 4);

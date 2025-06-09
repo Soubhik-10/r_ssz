@@ -6,5 +6,4 @@ edition = "2024"
 [dependencies]
 alloy-primitives = "1.2.0"
 thiserror = "2.0.12"
-sha2 = "0.10"
-ethereum-types = "0.14"
+sha2 = "0.10.9"
