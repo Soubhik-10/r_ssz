@@ -176,7 +176,7 @@ impl<const N: usize> Merkleize for BitList<N> {
 #[cfg(test)]
 mod tests {
 
-    use alloy_primitives::hex::{self, FromHex};
+    use alloy_primitives::hex::FromHex;
 
     use super::*;
 
@@ -372,7 +372,7 @@ mod tests {
 
         assert_ne!(root, [0u8; 32], "Merkle root should not be all zero");
 
-        println!("Merkle root for BitList<9>: 0x{}", hex::encode(root));
+        println!("Merkle root for BitList<9>: {}", root);
     }
     #[test]
     fn test_ssz_dev_verification() {
@@ -392,7 +392,7 @@ mod tests {
         println!(
             "Expected root: 0xfd47fe3518c2c13bd18426507ff14d4a05cb3fb932fc1e2e48c3b2cd4c1adda1"
         );
-        println!("Actual root:   0x{}", hex::encode(root));
+        println!("Actual root:   {}", root);
     }
     #[test]
     fn test_ssz_dev_verification_1() {
@@ -412,6 +412,6 @@ mod tests {
         println!(
             "Expected root: 0x3bbaf125dcf193d127c1949c44819d82fea1a4d3281c4300bb6901721e00ee6d"
         );
-        println!("Actual root:   0x{}", hex::encode(root));
+        println!("Actual root:   {}", root);
     }
 }
