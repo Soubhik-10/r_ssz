@@ -1,6 +1,9 @@
 use alloy_primitives::B256;
 
-use crate::{merkleization::{merkleize, mix_in_length, pack}, Merkleize, SSZError, SimpleSerialize, SszTypeInfo, BYTES_PER_CHUNK};
+use crate::{
+    BYTES_PER_CHUNK, Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
+    merkleization::{merkleize, mix_in_length, pack},
+};
 use core::convert::TryInto;
 
 impl<T, const N: usize> SszTypeInfo for [T; N]
@@ -134,43 +137,39 @@ impl<T, const N: usize> Merkleize for [T; N]
 where
     T: SimpleSerialize + SszTypeInfo + Clone + Merkleize,
 {
-fn hash_tree_root(&self) -> Result<B256, SSZError> {
-    if T::is_basic_type() {
-        // For basic type arrays (always vectors since arrays are fixed-size):
-       
-        let serialized = self.serialize()?;
-        
-        
-        let mut chunks = pack(&serialized);
-        
-        
-        if chunks.is_empty() {
-            chunks.push([0u8; BYTES_PER_CHUNK]);
-        }
-        
-        
-        let root = merkleize(&chunks, Some(T::chunk_count()))?;
-        let hashed_root=mix_in_length(root, self.len());
-        
-        Ok(hashed_root)
-    } else {
-        // For composite type arrays (always vectors):
-        let mut chunk_roots = Vec::with_capacity(self.len());
-        
-        for element in self {
-            let hash = element.hash_tree_root()?;
-            chunk_roots.push(hash.as_slice().try_into().unwrap());
-        }
-        
-        
-        let root = merkleize(&chunk_roots, Some(T::chunk_count()))?;
-         let hashed_root=mix_in_length(root, self.len());
+    fn hash_tree_root(&self) -> Result<B256, SSZError> {
+        if T::is_basic_type() {
+            // For basic type arrays (always vectors since arrays are fixed-size):
 
-        Ok(hashed_root)
+            let serialized = self.serialize()?;
+
+            let mut chunks = pack(&serialized);
+
+            if chunks.is_empty() {
+                chunks.push([0u8; BYTES_PER_CHUNK]);
+            }
+
+            let root = merkleize(&chunks, Some(T::chunk_count()))?;
+            let hashed_root = mix_in_length(root, self.len());
+
+            Ok(hashed_root)
+        } else {
+            // For composite type arrays (always vectors):
+            let mut chunk_roots = Vec::with_capacity(self.len());
+
+            for element in self {
+                let hash = element.hash_tree_root()?;
+                chunk_roots.push(hash.as_slice().try_into().unwrap());
+            }
+
+            let root = merkleize(&chunk_roots, Some(T::chunk_count()))?;
+            let hashed_root = mix_in_length(root, self.len());
+
+            Ok(hashed_root)
+        }
     }
-}
 
-fn chunk_count() -> usize {
+    fn chunk_count() -> usize {
         if T::is_basic_type() {
             // (N * size_of(T) + 31) / 32 for basic types
             let elem_size = T::fixed_size().expect("Basic types should have fixed size");
@@ -183,9 +182,12 @@ fn chunk_count() -> usize {
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::{hex::{self, FromHex}, B256};
+    use alloy_primitives::{
+        B256,
+        hex::{self, FromHex},
+    };
 
-    use crate::{ Merkleize,SimpleSerialize};
+    use crate::{Merkleize, SimpleSerialize};
 
     #[test]
     fn test_serialize_deserialize_fixed_array_u64() {
@@ -225,17 +227,20 @@ mod tests {
         assert_eq!(a, recovered_a);
     }
 
-#[test]
-fn test_ssz_merkle() {
-    let a:[u16;8] = [1,2,3,4,5,6,7,8];
-    let root = a.hash_tree_root().expect("can compute root");
-    
-    let expected = B256::from_hex(
-        "0xfb5fb49a69a1d04c26047dd760f560fae276a812cfecefa1f2a483d468486b0e"
-    ).expect("valid hex");
-    assert_eq!(root, expected, "\nExpected: 0x{}\nActual:   0x{}", 
-        hex::encode(expected),
-        hex::encode(root)
-    );
-}
+    #[test]
+    fn test_ssz_merkle() {
+        let a: [u16; 8] = [1, 2, 3, 4, 5, 6, 7, 8];
+        let root = a.hash_tree_root().expect("can compute root");
+
+        let expected =
+            B256::from_hex("0xfb5fb49a69a1d04c26047dd760f560fae276a812cfecefa1f2a483d468486b0e")
+                .expect("valid hex");
+        assert_eq!(
+            root,
+            expected,
+            "\nExpected: 0x{}\nActual:   0x{}",
+            hex::encode(expected),
+            hex::encode(root)
+        );
+    }
 }
