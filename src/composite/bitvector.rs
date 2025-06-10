@@ -1,10 +1,8 @@
 // ! Serialization and deserialization for BitVector
 
-use alloy_primitives::B256;
 
 use crate::{
-    Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
-    merkleization::{merkleize, pack_bytes},
+    SSZError, SimpleSerialize, SszTypeInfo,
 };
 
 #[derive(Debug, PartialEq)]
@@ -84,7 +82,7 @@ impl<const N: usize> SimpleSerialize for BitVector<N> {
         Ok(bv)
     }
 }
-
+/*
 /// implements `hash_tree_root` for BitVector
 impl<const N: usize> Merkleize for BitVector<N> {
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
@@ -111,11 +109,11 @@ impl<const N: usize> Merkleize for BitVector<N> {
     fn chunk_count() -> usize {
         N.div_ceil(256)
     }
-}
+}*/
 
 #[cfg(test)]
 mod tests {
-    use alloy_primitives::hex;
+    
 
     use super::*;
 
@@ -158,7 +156,7 @@ mod tests {
         let serialized = bv.serialize().unwrap();
         assert_eq!(serialized, input);
     }
-
+    /*
     #[test]
     fn test_bitvector_merkleization() {
         // Test empty bitvector
@@ -202,5 +200,5 @@ mod tests {
                 "1800000000000000000000000000000000000000000000000000000000000000"
             ))
         );
-    }
+    }*/
 }

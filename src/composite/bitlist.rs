@@ -4,7 +4,7 @@ use alloy_primitives::B256;
 
 use crate::{
     Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
-    merkleization::{merkleize, mix_in_length, pack_bytes},
+    merkleization::{merkleize, mix_in_length, pack},
 };
 
 #[derive(Debug, PartialEq)]
@@ -147,40 +147,36 @@ impl<const N: usize> SimpleSerialize for BitList<N> {
     }
 }
 
+/// calculates `hash_tree_root` for BitList
 impl<const N: usize> Merkleize for BitList<N> {
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
-        // Pack the bits into bytes (excluding delimiter)
-        let mut bytes = vec![0u8; self.bits.len().div_ceil(8)];
+        let bit_count = self.len();
+
+        let byte_count = bit_count.div_ceil(8);
+        let mut bytes = vec![0u8; byte_count];
         for (i, &bit) in self.bits.iter().enumerate() {
             if bit {
                 bytes[i / 8] |= 1 << (i % 8);
             }
         }
 
-        // Pack bytes into BYTES_PER_CHUNK-byte chunks
-        let chunks = pack_bytes(&bytes)?;
+        let chunks = pack(&bytes);
 
-        // Calculate chunk count limit
-        let chunk_count = Self::chunk_count();
-
-        // Merkleize with chunk count limit
-        let root = merkleize(&chunks, Some(chunk_count))?;
-
-        // Mix in length
-        let final_root = mix_in_length(root, self.bits.len());
-
+        let limit = N.div_ceil(256);
+        let root = merkleize(&chunks, Some(limit)).expect("merkleize");
+        let final_root = mix_in_length(root, bit_count);
         Ok(final_root)
     }
 
     fn chunk_count() -> usize {
-        N.div_ceil(256) // Chunk count for BitList[N]
+        N.div_ceil(256)
     }
 }
 
 #[cfg(test)]
 mod tests {
 
-    use alloy_primitives::hex;
+    use alloy_primitives::hex::{self, FromHex};
 
     use super::*;
 
@@ -377,5 +373,45 @@ mod tests {
         assert_ne!(root, [0u8; 32], "Merkle root should not be all zero");
 
         println!("Merkle root for BitList<9>: 0x{}", hex::encode(root));
+    }
+    #[test]
+    fn test_ssz_dev_verification() {
+        let bits = [false, false, true, true, false, false, false, false];
+        let mut bitlist = BitList::<16>::default();
+        for bit in bits {
+            bitlist.push(bit).expect("should push within limit");
+        }
+
+        let root = bitlist.hash_tree_root().expect("can compute root");
+        assert_eq!(
+            root,
+            B256::from_hex("0xfd47fe3518c2c13bd18426507ff14d4a05cb3fb932fc1e2e48c3b2cd4c1adda1")
+                .expect("valid hex")
+        );
+
+        println!(
+            "Expected root: 0xfd47fe3518c2c13bd18426507ff14d4a05cb3fb932fc1e2e48c3b2cd4c1adda1"
+        );
+        println!("Actual root:   0x{}", hex::encode(root));
+    }
+    #[test]
+    fn test_ssz_dev_verification_1() {
+        let bits = [
+            false, false, true, true, false, false, false, false, true, false, false,
+        ];
+        let mut bitlist = BitList::<32>::default();
+        for bit in bits {
+            bitlist.push(bit).expect("should push within limit");
+        }
+        let root = bitlist.hash_tree_root().expect("can compute root");
+        assert_eq!(
+            root,
+            B256::from_hex("0x3bbaf125dcf193d127c1949c44819d82fea1a4d3281c4300bb6901721e00ee6d")
+                .expect("valid hex")
+        );
+        println!(
+            "Expected root: 0x3bbaf125dcf193d127c1949c44819d82fea1a4d3281c4300bb6901721e00ee6d"
+        );
+        println!("Actual root:   0x{}", hex::encode(root));
     }
 }
