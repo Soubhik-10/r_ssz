@@ -88,6 +88,11 @@ impl SszTypeInfo for U256 {
     fn fixed_size() -> Option<usize> {
         Some(BYTES)
     }
+
+    ///Returns true since it is basic type.
+    fn is_basic_type()->bool {
+        true
+    }
 }
 macro_rules! impl_uint_merkleize {
     ($type:ty, $bytes:expr) => {

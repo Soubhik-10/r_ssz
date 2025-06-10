@@ -41,6 +41,11 @@ impl SszTypeInfo for bool {
     fn fixed_size() -> Option<usize> {
         Some(1)
     }
+
+    ///Returns true since it is basic type.
+    fn is_basic_type()->bool {
+        true
+    }
 }
 
 impl Merkleize for bool {
