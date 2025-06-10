@@ -43,7 +43,7 @@ impl SszTypeInfo for bool {
     }
 
     ///Returns true since it is basic type.
-    fn is_basic_type()->bool {
+    fn is_basic_type() -> bool {
         true
     }
 }

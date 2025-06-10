@@ -90,7 +90,7 @@ impl SszTypeInfo for U256 {
     }
 
     ///Returns true since it is basic type.
-    fn is_basic_type()->bool {
+    fn is_basic_type() -> bool {
         true
     }
 }
