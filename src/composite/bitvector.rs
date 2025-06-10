@@ -1,8 +1,10 @@
 // ! Serialization and deserialization for BitVector
 
+use alloy_primitives::B256;
 
 use crate::{
-    SSZError, SimpleSerialize, SszTypeInfo,
+    Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
+    merkleization::{merkleize, pack_bits},
 };
 
 #[derive(Debug, PartialEq)]
@@ -82,7 +84,7 @@ impl<const N: usize> SimpleSerialize for BitVector<N> {
         Ok(bv)
     }
 }
-/*
+
 /// implements `hash_tree_root` for BitVector
 impl<const N: usize> Merkleize for BitVector<N> {
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
@@ -95,7 +97,7 @@ impl<const N: usize> Merkleize for BitVector<N> {
         }
 
         // Pack bytes into BYTES_PER_CHUNK-byte chunks
-        let chunks = pack_bytes(&bytes)?;
+        let chunks = pack_bits(&bytes);
 
         // Calculate chunk count limit for bitvector: (N + 255) // 256
         let chunk_count = Self::chunk_count();
@@ -109,11 +111,12 @@ impl<const N: usize> Merkleize for BitVector<N> {
     fn chunk_count() -> usize {
         N.div_ceil(256)
     }
-}*/
+}
 
 #[cfg(test)]
 mod tests {
-    
+
+    use alloy_primitives::hex;
 
     use super::*;
 
@@ -156,7 +159,7 @@ mod tests {
         let serialized = bv.serialize().unwrap();
         assert_eq!(serialized, input);
     }
-    /*
+
     #[test]
     fn test_bitvector_merkleization() {
         // Test empty bitvector
@@ -200,5 +203,47 @@ mod tests {
                 "1800000000000000000000000000000000000000000000000000000000000000"
             ))
         );
-    }*/
+    }
+
+    #[test]
+    fn ssz_merkle_verification() {
+        let mut bv = BitVector::<11>::new();
+        for (i, &bit) in [
+            false, false, true, true, false, false, false, false, true, false, false,
+        ]
+        .iter()
+        .enumerate()
+        {
+            bv.set(i, bit).unwrap();
+        }
+        let root = bv.hash_tree_root().expect("can merkleize");
+        assert_eq!(
+            root,
+            B256::from(hex!(
+                "0x0c01000000000000000000000000000000000000000000000000000000000000"
+            ))
+        );
+    }
+
+    #[test]
+    fn ssz_merkle_verification_1() {
+        let mut bv = BitVector::<32>::new();
+        for (i, &bit) in [
+            true, false, true, false, true, false, true, false, false, true, false, true, false,
+            true, false, true, true, true, false, false, true, true, false, false, false, false,
+            true, true, false, false, true, true,
+        ]
+        .iter()
+        .enumerate()
+        {
+            bv.set(i, bit).unwrap();
+        }
+        let root = bv.hash_tree_root().expect("can merkleize");
+        assert_eq!(
+            root,
+            B256::from(hex!(
+                "0x55aa33cc00000000000000000000000000000000000000000000000000000000"
+            ))
+        );
+    }
 }
