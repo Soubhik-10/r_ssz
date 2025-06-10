@@ -69,6 +69,11 @@ macro_rules! impl_uint_typeinfo {
             fn fixed_size() -> Option<usize> {
                 Some($bytes)
             }
+
+            ///Returns true since it is basic type.
+            fn is_basic_type() -> bool {
+                true
+            }
         }
     };
 }
