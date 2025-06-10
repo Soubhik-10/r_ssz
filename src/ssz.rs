@@ -17,6 +17,9 @@ pub trait SszTypeInfo {
     /// If None, then it's variable-size (e.g. Vec<u8>, String, etc).
     fn is_fixed_size() -> bool;
     fn fixed_size() -> Option<usize>;
+    fn is_basic_type() -> bool {
+        false
+    }
 }
 
 /// Merkleization trait for SSZ types
