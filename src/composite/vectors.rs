@@ -1,11 +1,15 @@
 //! Serialization and deserialzation for vectors.
 
+use crate::merkleization::{SSZType, chunk_count, pack};
 use crate::{
+    Merkleize,
     SSZError::{self},
     SszTypeInfo,
+    merkleization::merkleize,
     ssz::SimpleSerialize,
 };
 use alloc::vec::Vec;
+use alloy_primitives::B256;
 
 impl<T> SszTypeInfo for Vec<T>
 where
@@ -168,10 +172,37 @@ where
     }
 }
 
+impl<T> Merkleize for Vec<T>
+where
+    T: SszTypeInfo + SimpleSerialize + Merkleize,
+{
+    fn hash_tree_root(&self) -> Result<B256, SSZError> {
+        if T::is_basic_type() {
+            // For basic types: Serialize, pack into chunks, then merkleize.
+            let serialized = self.serialize()?; // Handle errors properly (no unwrap)
+            let packed = pack(&serialized);
+            let chunk_count = chunk_count(SSZType::VectorBasic {
+                elem_size: T::fixed_size().unwrap(),
+                count: self.len(),
+            });
+            merkleize(&packed, Some(chunk_count))
+        } else {
+            // For composite types: Compute hash_tree_root for each element, collect as Vec<[u8; 32]>
+            let roots: Result<Vec<[u8; 32]>, SSZError> = self
+                .iter()
+                .map(|element| element.hash_tree_root().map(|b256| b256.0))
+                .collect();
+            let roots_bytes = roots?; // Propagate errors
+            merkleize(&roots_bytes, Some(Self::chunk_count()))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::ssz::SimpleSerialize;
+    use alloy_primitives::{B256, hex};
 
     #[test]
     fn test_vec_fixed_size_serialization() {
@@ -202,5 +233,17 @@ mod tests {
         let deserialized = Vec::<u8>::deserialize(&serialized).expect("deserialize empty vec");
         assert_eq!(v, deserialized);
         assert!(serialized.is_empty());
+    }
+
+    #[test]
+    fn test_vec_hash_tree_root() {
+        // Example vector of u8 (basic type)
+        let v: Vec<u8> = vec![1, 2, 3, 4];
+        let root = v.hash_tree_root().expect("hash tree root for basic vec");
+        println!("Hash tree root: {root:?}");
+        let expected_root = B256::from(hex!(
+            "0102030400000000000000000000000000000000000000000000000000000000"
+        ));
+        assert_eq!(root, expected_root, "Hash tree root mismatch for basic vec");
     }
 }
