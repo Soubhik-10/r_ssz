@@ -133,40 +133,32 @@ where
     }
 }
 
+/// implements `hash_tree_root` for List
 impl<T, const N: usize> Merkleize for [T; N]
 where
     T: SimpleSerialize + SszTypeInfo + Clone + Merkleize,
 {
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
-        if T::is_basic_type() {
+        let chunks = if T::is_basic_type() {
             // For basic type arrays (always vectors since arrays are fixed-size):
-
             let serialized = self.serialize()?;
-
             let mut chunks = pack(&serialized);
-
             if chunks.is_empty() {
                 chunks.push([0u8; BYTES_PER_CHUNK]);
             }
-
-            let root = merkleize(&chunks, Some(T::chunk_count()))?;
-            let hashed_root = mix_in_length(root, self.len());
-
-            Ok(hashed_root)
+            chunks
         } else {
             // For composite type arrays (always vectors):
-            let mut chunk_roots = Vec::with_capacity(self.len());
-
+            let mut chunks = Vec::with_capacity(self.len());
             for element in self {
                 let hash = element.hash_tree_root()?;
-                chunk_roots.push(hash.as_slice().try_into().unwrap());
+                chunks.push(hash.as_slice().try_into().unwrap());
             }
-
-            let root = merkleize(&chunk_roots, Some(T::chunk_count()))?;
-            let hashed_root = mix_in_length(root, self.len());
-
-            Ok(hashed_root)
-        }
+            chunks
+        };
+        let root = merkleize(&chunks, Some(T::chunk_count()))?;
+        let final_root = mix_in_length(root, self.len());
+        Ok(final_root)
     }
 
     fn chunk_count() -> usize {
