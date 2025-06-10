@@ -1,5 +1,5 @@
 //! Option aka Some and None
-use crate::{SSZError, SimpleSerialize, SszTypeInfo};
+use crate::{Merkleize, SSZError, SimpleSerialize, SszTypeInfo};
 
 impl<T> SszTypeInfo for Option<T>
 where
@@ -13,6 +13,10 @@ where
     /// Returns None since the size of an option is not fixed.
     fn fixed_size() -> Option<usize> {
         None
+    }
+
+    fn is_basic_type() -> bool {
+        T::is_basic_type()
     }
 }
 
@@ -52,6 +56,24 @@ where
     }
 }
 
+impl<T> Merkleize for Option<T>
+where
+    T: Merkleize,
+{
+    fn hash_tree_root(&self) -> Result<alloy_primitives::B256, SSZError> {
+        match self {
+            Some(value) => value.hash_tree_root(),
+            None => Ok(alloy_primitives::B256::ZERO),
+        }
+    }
+
+    fn chunk_count() -> usize
+    where
+        Self: Sized,
+    {
+        T::chunk_count()
+    }
+}
 #[cfg(test)]
 mod tests {
     use crate::SimpleSerialize;
