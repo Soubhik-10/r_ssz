@@ -1,5 +1,7 @@
 //! Option aka Some and None
-use crate::{Merkleize, SSZError, SimpleSerialize, SszTypeInfo};
+use alloy_primitives::B256;
+
+use crate::{Merkleize, SSZError, SimpleSerialize, SszTypeInfo, merkleization::mix_in_selector};
 
 impl<T> SszTypeInfo for Option<T>
 where
@@ -60,20 +62,17 @@ impl<T> Merkleize for Option<T>
 where
     T: Merkleize,
 {
-    fn hash_tree_root(&self) -> Result<alloy_primitives::B256, SSZError> {
+    fn hash_tree_root(&self) -> Result<B256, SSZError> {
         match self {
-            Some(value) => value.hash_tree_root(),
-            None => Ok(alloy_primitives::B256::ZERO),
+            Some(value) => {
+                let value_root = value.hash_tree_root()?;
+                Ok(mix_in_selector(value_root, 1))
+            }
+            None => Ok(mix_in_selector(B256::ZERO, 0)),
         }
     }
-
-    fn chunk_count() -> usize
-    where
-        Self: Sized,
-    {
-        T::chunk_count()
-    }
 }
+
 #[cfg(test)]
 mod tests {
     use crate::SimpleSerialize;
@@ -88,7 +87,7 @@ mod tests {
     #[test]
     fn test_serialize_some() {
         let some_val: Option<u64> = Some(0x1122334455667788);
-        let mut expected = vec![1]; // prefix for Some
+        let mut expected = vec![1];
         expected.extend_from_slice(&0x1122334455667788u64.to_le_bytes());
         assert_eq!(some_val.serialize().unwrap(), expected);
     }
@@ -128,7 +127,7 @@ mod tests {
         let a: Option<u8> = Some(4);
         let hashed_tree_root = a.hash_tree_root();
         let expected_root = alloy_primitives::B256::from(alloy_primitives::hex!(
-            "0x0400000000000000000000000000000000000000000000000000000000000000"
+            "0x7063e9add4fb20ab4aee17f218b851e7c814f14ca5c8ec09208d34fe2865cd86"
         ));
         assert_eq!(hashed_tree_root.unwrap(), expected_root);
     }
@@ -138,8 +137,18 @@ mod tests {
         let a: Option<bool> = Some(true);
         let hashed_tree_root = a.hash_tree_root();
         let expected_root = alloy_primitives::B256::from(alloy_primitives::hex!(
-            "0x0100000000000000000000000000000000000000000000000000000000000000"
+            "0x56d8a66fbae0300efba7ec2c531973aaae22e7a2ed6ded081b5b32d07a32780a"
         ));
         assert_eq!(hashed_tree_root.unwrap(), expected_root);
+    }
+
+    #[test]
+    fn check_composite_hash_tree_root() {
+        let a: Option<[u8; 3]> = Some([2, 4, 6]);
+        let hashed_tree_root = a.hash_tree_root();
+        let recovered_tree = alloy_primitives::B256::from(alloy_primitives::hex!(
+            "0x53cc7f90b9577c52542200e88688f6646420a9db72bb97d6f8a73f15f9fcd131"
+        ));
+        assert_eq!(hashed_tree_root.unwrap(), recovered_tree);
     }
 }
