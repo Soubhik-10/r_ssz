@@ -36,6 +36,15 @@ pub enum SSZError {
     #[error("Invalid Chunk Count: limit {limit}, got {count}")]
     ChunkCountExceedsLimit { count: usize, limit: usize },
 
+    #[error("Unknown selector: {selector}")]
+    InvalidInput { selector: usize },
+
+    #[error("Expected further input")]
+    ExpectedFurtherInput,
+
+    #[error("{reason} for {selector}")]
+    InvalidSelector { reason: String, selector: usize },
+
     #[error("Unknown error occurred")]
     Unknown,
 }
