@@ -77,6 +77,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::SimpleSerialize;
+    use crate::ssz::Merkleize;
 
     #[test]
     fn test_serialize_none() {
@@ -120,5 +121,25 @@ mod tests {
         let serialized = some_val.serialize().unwrap();
         let deserialized = Option::<u64>::deserialize(&serialized).unwrap();
         assert_eq!(deserialized, some_val);
+    }
+
+    #[test]
+    fn check_hash_tree_root_calculation() {
+        let a: Option<u8> = Some(4);
+        let hashed_tree_root = a.hash_tree_root();
+        let expected_root = alloy_primitives::B256::from(alloy_primitives::hex!(
+            "0x0400000000000000000000000000000000000000000000000000000000000000"
+        ));
+        assert_eq!(hashed_tree_root.unwrap(), expected_root);
+    }
+
+    #[test]
+    fn check_hash_tree_root_calculation_2() {
+        let a: Option<bool> = Some(true);
+        let hashed_tree_root = a.hash_tree_root();
+        let expected_root = alloy_primitives::B256::from(alloy_primitives::hex!(
+            "0x0100000000000000000000000000000000000000000000000000000000000000"
+        ));
+        assert_eq!(hashed_tree_root.unwrap(), expected_root);
     }
 }
