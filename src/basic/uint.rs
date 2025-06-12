@@ -4,8 +4,9 @@ use crate::Merkleize;
 use crate::SszTypeInfo;
 use crate::constants::BYTES;
 use crate::{SSZError, SimpleSerialize};
-use alloy_primitives::B256;
-use alloy_primitives::U256;
+use alloc::vec::Vec;
+use alloy_primitives::{B256, U256};
+use core::{option::Option, result::Result};
 
 macro_rules! impl_uint {
     ($type:ty, $bytes:expr) => {
@@ -132,6 +133,8 @@ impl Merkleize for U256 {
 mod tests {
 
     use super::*;
+    use alloc::vec;
+    use alloc::vec::Vec;
     use alloy_primitives::hex;
 
     #[test]

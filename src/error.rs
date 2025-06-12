@@ -1,5 +1,6 @@
 //! Error variants for SSZ.
 
+use alloc::string::String;
 use thiserror::Error;
 
 #[derive(Debug, Error, PartialEq, Eq)]

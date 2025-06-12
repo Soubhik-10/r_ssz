@@ -4,7 +4,10 @@ use crate::{
     Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
     merkleization::{merkleize, pack_bits},
 };
+use alloc::vec;
+use alloc::vec::Vec;
 use alloy_primitives::B256;
+use core::{option::Option, result::Result};
 
 #[derive(Debug, PartialEq)]
 pub struct BitVector<const N: usize> {

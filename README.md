@@ -1,8 +1,9 @@
+# 🔐 r_ssz
 
-# 🧬 ssz-rs
-
-[![CI](https://github.com/Soubhik-10/ssz-rs/actions/workflows/rust.yml/badge.svg)](https://github.com/Soubhik-10/ssz-rs/actions)
-[![CI](https://github.com/Soubhik-10/ssz-rs/actions/workflows/lint.yml/badge.svg)](https://github.com/Soubhik-10/ssz-rs/actions)
+[![CI](https://github.com/Soubhik-10/r_ssz/actions/workflows/rust.yml/badge.svg)](https://github.com/Soubhik-10/r_ssz/actions)
+[![CI](https://github.com/Soubhik-10/r_ssz/actions/workflows/lint.yml/badge.svg)](https://github.com/Soubhik-10/r_ssz/actions)
+[![CI](https://github.com/Soubhik-10/r_ssz/actions/workflows/nostd.yml/badge.svg)](https://github.com/Soubhik-10/r_ssz/actions)
+[![CI](https://github.com/Soubhik-10/r_ssz/actions/workflows/miri.yml/badge.svg)](https://github.com/Soubhik-10/r_ssz/actions)
 
 A minimal, readable implementation of Ethereum's [SSZ] in Rust. Built for experimentation, testing, and learning.
 
@@ -10,9 +11,9 @@ A minimal, readable implementation of Ethereum's [SSZ] in Rust. Built for experi
 
 ## ✨ Features
 
-- SSZ serialization/deserialization for primitive and composite types  
-- Full `hash_tree_root` Merkleization support  
-- Supports `BitList`, `BitVector`, `List`, `Vector`, `Option`, `Union`, and containers  
+- SSZ serialization/deserialization for primitive and composite types
+- Full `hash_tree_root` Merkleization support
+- Supports `BitList`, `BitVector`, `List`, `Vector`, `Option`, `Union`, and containers
 - Minimal dependencies
 - `no-std` support
 
@@ -29,9 +30,9 @@ against [`@chainsafe/ssz`](https://github.com/ChainSafe/ssz/tree/master/packages
 
 ## 👥 Contributors
 
-[![Contributors](https://contrib.rocks/image?repo=Soubhik-10/ssz-rs)](https://github.com/Soubhik-10/ssz-rs/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=Soubhik-10/r_ssz)](https://github.com/Soubhik-10/r_ssz/graphs/contributors)
 
-👉 See the [full contributor list](https://github.com/Soubhik-10/ssz-rs/graphs/contributors).
+👉 See the [full contributor list](https://github.com/Soubhik-10/r_ssz/graphs/contributors).
 
 ---
 
@@ -50,3 +51,4 @@ Add to `Cargo.toml`:
 r_ssz = { git = "https://github.com/Soubhik-10/r_ssz" }
 
 
+```

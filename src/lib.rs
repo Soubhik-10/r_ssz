@@ -1,5 +1,5 @@
 //! Contains the base modules.
-
+#![no_std]
 extern crate alloc;
 
 pub mod basic;
