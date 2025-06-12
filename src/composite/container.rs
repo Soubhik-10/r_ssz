@@ -1,4 +1,4 @@
-// ! Serializes,deserializes and merkleization of container
+//! Serializes , deserializes and merkleization of container.
 
 use crate::error::SSZError;
 use crate::ssz::SimpleSerialize;
@@ -143,7 +143,10 @@ mod test {
             name: true,
         };
         let root = TestComposite::hash_tree_root(&original).expect("Hash tree root failed");
-        println!("Hash tree root: {:?}", root);
+        let expected_root = alloy_primitives::B256::from(alloy_primitives::hex!(
+            "0xf9c5ada16029ed1580188989686f19e749c006b2eac37d3ef087b824b31ba997"
+        ));
+        assert_eq!(root, expected_root);
         let serialized = original.serialize().expect("Serialization failed");
         let deserialized =
             super::TestComposite::deserialize(&serialized).expect("Deserialization failed");

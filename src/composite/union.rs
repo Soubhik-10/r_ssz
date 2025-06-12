@@ -307,7 +307,6 @@ mod tests {
         let original = BadUnion::Reserved(42);
         let encoded = original.serialize().expect("Serialization failed");
         let decoded = BadUnion::deserialize(&encoded);
-        println!("{:?}", decoded);
         match decoded {
             Err(SSZError::InvalidSelector { selector, reason }) => {
                 assert_eq!(selector, 200);

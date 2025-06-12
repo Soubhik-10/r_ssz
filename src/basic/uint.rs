@@ -131,9 +131,8 @@ impl Merkleize for U256 {
 #[cfg(test)]
 mod tests {
 
-    use alloy_primitives::hex;
-
     use super::*;
+    use alloy_primitives::hex;
 
     #[test]
     fn test_uint_serialize() {
@@ -156,7 +155,6 @@ mod tests {
         assert_eq!(u32::deserialize(&[0, 0, 1, 0]), Ok(65536));
         assert_eq!(U256::deserialize(&[0xffu8; 32]), Ok(U256::MAX));
 
-        // Test invalid lengths
         assert!(u8::deserialize(&[0, 0]).is_err());
         assert!(u16::deserialize(&[0]).is_err());
         assert!(u32::deserialize(&[0, 0, 0]).is_err());
@@ -191,7 +189,6 @@ mod tests {
             ))
         );
 
-        // Test u32
         let value_u32: u32 = 0xFFFFFFFF;
         let root_u32 = value_u32.hash_tree_root().unwrap();
         assert_eq!(
@@ -201,7 +198,6 @@ mod tests {
             ))
         );
 
-        // Test U256
         let value_u256 = U256::MAX;
         let root_u256 = value_u256.hash_tree_root().unwrap();
         assert_eq!(

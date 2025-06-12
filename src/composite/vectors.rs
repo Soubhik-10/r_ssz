@@ -90,7 +90,7 @@ where
         }
     }
 
-    /// Deserializes the vector
+    /// Deserializes the vector.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if T::is_fixed_size() {
             let elem_size = T::fixed_size().ok_or(SSZError::InvalidLength {
@@ -235,7 +235,6 @@ mod tests {
     fn test_vec_hash_tree_root() {
         let v: Vec<u8> = vec![1, 2, 3, 4];
         let root = v.hash_tree_root().expect("hash tree root for basic vec");
-        println!("Hash tree root: {root:?}");
         let expected_root = B256::from(hex!(
             "0102030400000000000000000000000000000000000000000000000000000000"
         ));

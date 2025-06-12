@@ -1,11 +1,10 @@
-// ! Serialization,deserialization and merkleization for BitVector
-
-use alloy_primitives::B256;
+//! Serialization , deserialization and merkleization for BitVector.
 
 use crate::{
     Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
     merkleization::{merkleize, pack_bits},
 };
+use alloy_primitives::B256;
 
 #[derive(Debug, PartialEq)]
 pub struct BitVector<const N: usize> {

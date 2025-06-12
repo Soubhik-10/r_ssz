@@ -62,9 +62,8 @@ impl Merkleize for bool {
 #[cfg(test)]
 mod tests {
 
-    use alloy_primitives::hex::FromHex;
-
     use super::*;
+    use alloy_primitives::hex::FromHex;
 
     #[test]
     fn test_bool_serialize() {

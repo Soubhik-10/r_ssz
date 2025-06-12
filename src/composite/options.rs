@@ -1,7 +1,7 @@
-//! ! Serializes,deserializes and merkleization of options.
-use alloy_primitives::B256;
+//! Serializes,deserializes and merkleization of options.
 
 use crate::{Merkleize, SSZError, SimpleSerialize, SszTypeInfo, merkleization::mix_in_selector};
+use alloy_primitives::B256;
 
 impl<T> SszTypeInfo for Option<T>
 where
@@ -58,6 +58,7 @@ where
     }
 }
 
+/// Implements Merkleization for option.
 impl<T> Merkleize for Option<T>
 where
     T: Merkleize,

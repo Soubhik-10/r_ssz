@@ -1,11 +1,10 @@
-// ! Serialization,deserialization and merkleization for bitlist
-
-use alloy_primitives::B256;
+//! Serialization , deserialization and merkleization for bitlist.
 
 use crate::{
     Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
     merkleization::{merkleize, mix_in_length, pack},
 };
+use alloy_primitives::B256;
 
 #[derive(Debug, PartialEq)]
 pub struct BitList<const N: usize> {

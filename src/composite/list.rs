@@ -1,11 +1,10 @@
-// ! Serializes,deserializes and merkleization of list
-
-use alloy_primitives::B256;
+//! Serializes,deserializes and merkleization of list.
 
 use crate::{
     BYTES_PER_CHUNK, Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
     merkleization::{merkleize, mix_in_length, pack},
 };
+use alloy_primitives::B256;
 use core::convert::TryInto;
 
 impl<T, const N: usize> SszTypeInfo for [T; N]
@@ -179,12 +178,11 @@ where
 #[cfg(test)]
 mod tests {
 
+    use crate::{Merkleize, SimpleSerialize};
     use alloy_primitives::{
         B256,
         hex::{self, FromHex},
     };
-
-    use crate::{Merkleize, SimpleSerialize};
 
     #[test]
     fn test_serialize_deserialize_fixed_array_u64() {

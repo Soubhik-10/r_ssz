@@ -1,4 +1,4 @@
-//! SSZ Merkleization helper functions
+//! SSZ Merkleization helper functions.
 
 use crate::SSZError;
 use alloy_primitives::B256;
