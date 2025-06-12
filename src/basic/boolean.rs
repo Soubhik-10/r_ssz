@@ -3,7 +3,7 @@
 use crate::{
     Merkleize,
     SSZError::{self, *},
-    SszTypeInfo,
+    SimpleDeserialize, SszTypeInfo,
     ssz::SimpleSerialize,
 };
 use alloc::vec;
@@ -16,7 +16,9 @@ impl SimpleSerialize for bool {
     fn serialize(&self) -> Result<Vec<u8>, SSZError> {
         if *self { Ok(vec![1]) } else { Ok(vec![0]) }
     }
+}
 
+impl SimpleDeserialize for bool {
     /// Deserializes a boolean value.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if data.len() != 1 {

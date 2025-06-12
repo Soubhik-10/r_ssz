@@ -1,5 +1,6 @@
 //! Serializes,deserializes and merkleization of options.
 
+use crate::SimpleDeserialize;
 use crate::{Merkleize, SSZError, SimpleSerialize, SszTypeInfo, merkleization::mix_in_selector};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -39,7 +40,12 @@ where
             None => Ok(vec![0]), // Tag for None
         }
     }
+}
 
+impl<T> SimpleDeserialize for Option<T>
+where
+    T: SimpleDeserialize,
+{
     /// Deserializes an option, interpreting the first byte to determine if it is `Some` or `None`.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if data.is_empty() {
@@ -80,8 +86,8 @@ where
 mod tests {
     use alloc::vec;
 
-    use crate::SimpleSerialize;
     use crate::ssz::Merkleize;
+    use crate::{SimpleDeserialize, SimpleSerialize};
 
     #[test]
     fn test_serialize_none() {

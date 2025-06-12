@@ -4,10 +4,14 @@ use crate::SSZError;
 use alloc::vec::Vec;
 use alloy_primitives::B256;
 
-/// The `SimpleSerialize` trait defines methods for serializing and deserializing data structures
+/// The `SimpleSerialize` trait defines methods for serializing data structures
 pub trait SimpleSerialize: Sized {
     /// Serializes the data structure into a byte vector.
     fn serialize(&self) -> Result<Vec<u8>, SSZError>;
+}
+
+/// The `SimpleDeserialize` trait defines methods for deserializing data structures
+pub trait SimpleDeserialize: Sized {
     /// Deserializes the data structure from a byte slice.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError>;
 }

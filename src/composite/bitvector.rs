@@ -1,7 +1,7 @@
 //! Serialization , deserialization and merkleization for BitVector.
 
 use crate::{
-    Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
+    Merkleize, SSZError, SimpleDeserialize, SimpleSerialize, SszTypeInfo,
     merkleization::{merkleize, pack_bits},
 };
 use alloc::vec;
@@ -65,7 +65,9 @@ impl<const N: usize> SimpleSerialize for BitVector<N> {
 
         Ok(bytes)
     }
+}
 
+impl<const N: usize> SimpleDeserialize for BitVector<N> {
     /// Deserializes a bit vector.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         let expected_bytes = N.div_ceil(8);

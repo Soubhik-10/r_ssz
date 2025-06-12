@@ -1,7 +1,7 @@
 //! Serializes,deserializes and merkleization of list.
 
 use crate::{
-    BYTES_PER_CHUNK, Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
+    BYTES_PER_CHUNK, Merkleize, SSZError, SimpleDeserialize, SimpleSerialize, SszTypeInfo,
     merkleization::{merkleize, mix_in_length, pack},
 };
 use alloc::vec::Vec;
@@ -61,7 +61,12 @@ where
             Ok(out)
         }
     }
+}
 
+impl<T, const N: usize> SimpleDeserialize for [T; N]
+where
+    T: SimpleDeserialize + Clone + SszTypeInfo,
+{
     /// Deserializes the list.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if T::is_fixed_size() {
@@ -179,6 +184,7 @@ where
 #[cfg(test)]
 mod tests {
 
+    use crate::ssz::SimpleDeserialize;
     use crate::{Merkleize, SimpleSerialize};
     use alloc::vec;
     use alloy_primitives::{

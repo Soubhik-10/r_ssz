@@ -1,7 +1,7 @@
 //! Serialization , deserialization and merkleization for bitlist.
 
 use crate::{
-    Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
+    Merkleize, SSZError, SimpleDeserialize, SimpleSerialize, SszTypeInfo,
     merkleization::{merkleize, mix_in_length, pack},
 };
 use alloc::vec;
@@ -101,7 +101,9 @@ impl<const N: usize> SimpleSerialize for BitList<N> {
 
         Ok(bytes)
     }
+}
 
+impl<const N: usize> SimpleDeserialize for BitList<N> {
     /// Deserializes a bit list.    
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if data.is_empty() {

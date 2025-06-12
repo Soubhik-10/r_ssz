@@ -1,6 +1,7 @@
 //! Serialization and deserialzation for uint values.
 
 use crate::Merkleize;
+use crate::SimpleDeserialize;
 use crate::SszTypeInfo;
 use crate::constants::BYTES;
 use crate::{SSZError, SimpleSerialize};
@@ -15,7 +16,9 @@ macro_rules! impl_uint {
             fn serialize(&self) -> Result<Vec<u8>, SSZError> {
                 Ok(self.to_le_bytes().to_vec())
             }
+        }
 
+        impl SimpleDeserialize for $type {
             /// Implements the deserialization trait for unsigned integers.
             fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
                 if data.len() != $bytes {
@@ -43,7 +46,9 @@ impl SimpleSerialize for U256 {
     fn serialize(&self) -> Result<Vec<u8>, SSZError> {
         Ok(self.to_le_bytes::<{ BYTES }>().to_vec())
     }
+}
 
+impl SimpleDeserialize for U256 {
     /// Implements the deserialization trait for U256.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if data.len() != BYTES {

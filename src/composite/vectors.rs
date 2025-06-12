@@ -1,5 +1,6 @@
 //! Serialization,deserialzation and merkleization for vectors.
 
+use crate::SimpleDeserialize;
 use crate::merkleization::{SSZType, chunk_count, pack};
 use crate::{
     Merkleize,
@@ -89,7 +90,12 @@ where
             Ok(out)
         }
     }
+}
 
+impl<T> SimpleDeserialize for Vec<T>
+where
+    T: SimpleDeserialize + SszTypeInfo,
+{
     /// Deserializes the vector.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if T::is_fixed_size() {
