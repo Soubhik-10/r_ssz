@@ -13,7 +13,7 @@ A minimal, readable implementation of Ethereum's [SSZ] in Rust. Built for experi
 
 - SSZ serialization/deserialization for primitive and composite types
 - Full `hash_tree_root` Merkleization support
-- Supports `BitList`, `BitVector`, `List`, `Vector`, `Option`, `Union`, and containers
+- Supports `BitList`, `BitVector`, `List`, `Vector`, `Option`, `Union` and `Container`
 - Minimal dependencies
 - `no-std` support
 
@@ -22,9 +22,9 @@ A minimal, readable implementation of Ethereum's [SSZ] in Rust. Built for experi
 ## ✅ Test Coverage
 
 **Note:**  
-All implementations have been manually tested by
+All implementations have been tested by
 [@Rimeeeeee](https://github.com/Rimeeeeee) and [@Soubhik-10](https://github.com/Soubhik-10)
-against [`@chainsafe/ssz`](https://github.com/ChainSafe/ssz/tree/master/packages/ssz) fixtures.
+using [`@chainsafe/ssz`](https://github.com/ChainSafe/ssz/tree/master/packages/ssz) package.
 
 ---
 
