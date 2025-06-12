@@ -1,3 +1,5 @@
+// ! Serializes,deserializes and merkleization of list
+
 use alloy_primitives::B256;
 
 use crate::{
@@ -10,10 +12,12 @@ impl<T, const N: usize> SszTypeInfo for [T; N]
 where
     T: SszTypeInfo,
 {
+    /// Returns true if size is fixed else false.
     fn is_fixed_size() -> bool {
         T::is_fixed_size()
     }
 
+    /// Provides size info.
     fn fixed_size() -> Option<usize> {
         if T::is_fixed_size() {
             Some(T::fixed_size().unwrap() * N)
@@ -27,6 +31,7 @@ impl<T, const N: usize> SimpleSerialize for [T; N]
 where
     T: SimpleSerialize + Clone + SszTypeInfo,
 {
+    /// Serializes the list.
     fn serialize(&self) -> Result<Vec<u8>, SSZError> {
         if T::is_fixed_size() {
             let mut out = Vec::with_capacity(N * T::fixed_size().unwrap());
@@ -35,7 +40,6 @@ where
             }
             Ok(out)
         } else {
-            // Variable-size: offsets + data
             let mut offsets = Vec::with_capacity(N);
             let mut data_parts = Vec::with_capacity(N);
             let mut offset = (crate::BYTES_PER_LENGTH_OFFSET * N) as u32;
@@ -58,6 +62,7 @@ where
         }
     }
 
+    /// Deserializes the list.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if T::is_fixed_size() {
             let size = T::fixed_size().unwrap();
@@ -76,7 +81,6 @@ where
                 let elem = T::deserialize(&data[start..end])?;
                 elements.push(elem);
             }
-            // Convert Vec<T> to [T; N]
             elements
                 .clone()
                 .into_iter()
@@ -133,7 +137,7 @@ where
     }
 }
 
-/// implements `hash_tree_root` for List
+/// Implements `hash_tree_root` for List.
 impl<T, const N: usize> Merkleize for [T; N]
 where
     T: SimpleSerialize + SszTypeInfo + Clone + Merkleize,
@@ -174,6 +178,7 @@ where
 
 #[cfg(test)]
 mod tests {
+
     use alloy_primitives::{
         B256,
         hex::{self, FromHex},
@@ -191,7 +196,6 @@ mod tests {
 
     #[test]
     fn test_serialize_deserialize_array_option_u64() {
-        // Assume Option<u64> uses tagged serialization (0 for None, 1 + serialized u64 for Some)
         let arr: [Option<u64>; 3] = [Some(42), None, Some(99)];
         let serialized = arr.serialize().unwrap();
         let deserialized = <[Option<u64>; 3]>::deserialize(&serialized).unwrap();
@@ -200,7 +204,6 @@ mod tests {
 
     #[test]
     fn test_deserialize_invalid_length_fixed_array() {
-        // Length not a multiple of 8 bytes (u64 size)
         let bad_data = vec![0u8; 10];
         let result = <[u64; 2]>::deserialize(&bad_data);
         assert!(result.is_err());

@@ -1,4 +1,4 @@
-//! Serialization and deserialization for boolean values.
+//! Serialization deserialization and merkleization for boolean values.
 
 use alloy_primitives::B256;
 
@@ -61,6 +61,7 @@ impl Merkleize for bool {
 
 #[cfg(test)]
 mod tests {
+
     use alloy_primitives::hex::FromHex;
 
     use super::*;
@@ -75,11 +76,7 @@ mod tests {
     fn test_bool_deserialize() {
         assert_eq!(bool::deserialize(&[1]), Ok(true));
         assert_eq!(bool::deserialize(&[0]), Ok(false));
-        // Test panic on invalid byte
-        // Deserialize invalid byte
         assert_eq!(bool::deserialize(&[2]), Err(SSZError::InvalidBooleanByte));
-
-        // Deserialize empty slice
         assert_eq!(
             bool::deserialize(&[]),
             Err(SSZError::InvalidLength {
@@ -87,8 +84,6 @@ mod tests {
                 got: 0
             })
         );
-
-        // Deserialize too many bytes
         assert_eq!(
             bool::deserialize(&[1, 0]),
             Err(SSZError::InvalidLength {
@@ -100,13 +95,11 @@ mod tests {
 
     #[test]
     fn test_bool_roundtrip() {
-        // Test roundtrip for true
         let original_true = true;
         let serialized = original_true.serialize().expect("can serialize true");
         let recovered_true = bool::deserialize(&serialized).expect("can deserialize true");
         assert_eq!(original_true, recovered_true);
 
-        // Test roundtrip for false
         let original_false = false;
         let serialized = original_false.serialize().expect("can serialize false");
         let recovered_false = bool::deserialize(&serialized).expect("can deserialize false");
@@ -114,7 +107,6 @@ mod tests {
     }
     #[test]
     fn test_bool_hash_tree_root() {
-        // Test true value
         let root_true = true.hash_tree_root().expect("can merkleize true");
         assert_eq!(
             root_true,
@@ -122,7 +114,6 @@ mod tests {
                 .expect("valid hex")
         );
 
-        // Test false value
         let root_false = false.hash_tree_root().expect("can merkleize false");
         assert_eq!(
             root_false,
@@ -130,7 +121,6 @@ mod tests {
                 .expect("valid hex")
         );
 
-        // Verify roots are different
         assert_ne!(root_true, root_false);
     }
 }

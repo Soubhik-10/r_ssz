@@ -1,4 +1,4 @@
-// ! Serialization and deserialization for bitlist
+// ! Serialization,deserialization and merkleization for bitlist
 
 use alloy_primitives::B256;
 
@@ -62,10 +62,12 @@ impl<const N: usize> BitList<N> {
 }
 
 impl<const N: usize> SszTypeInfo for BitList<N> {
+    /// Returns false since not fixed size.
     fn is_fixed_size() -> bool {
         false
     }
 
+    /// Returns the size of the type in bytes.
     fn fixed_size() -> Option<usize> {
         None
     }
@@ -147,7 +149,7 @@ impl<const N: usize> SimpleSerialize for BitList<N> {
     }
 }
 
-/// calculates `hash_tree_root` for BitList
+/// Calculates `hash_tree_root` for BitList
 impl<const N: usize> Merkleize for BitList<N> {
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
         let bit_count = self.len();
@@ -176,33 +178,27 @@ impl<const N: usize> Merkleize for BitList<N> {
 #[cfg(test)]
 mod tests {
 
-    use alloy_primitives::hex::FromHex;
-
     use super::*;
+    use alloy_primitives::hex::FromHex;
 
     #[test]
     fn test_bitlist_edge_cases() {
-        // Test empty bitlist
         let empty: BitList<32> = BitList::default();
         assert_eq!(empty.len(), 0);
         assert!(empty.is_empty());
 
-        // Serialization of empty bitlist should work
         let encoding = empty.serialize().expect("can encode empty");
-        assert_eq!(encoding, vec![1]); // Just delimiter bit
+        assert_eq!(encoding, vec![1]);
 
-        // Deserialization of empty bitlist should work
         let decoded = BitList::<32>::deserialize(&[1]).expect("can decode empty");
         assert_eq!(decoded, empty);
 
-        // Test exceeding max length during push
         let mut list = BitList::<3>::default();
         list.push(true).unwrap();
         list.push(false).unwrap();
         list.push(true).unwrap();
         assert_eq!(list.len(), 3);
 
-        // Pushing beyond limit should fail
         let result = list.push(true);
         assert!(matches!(
             result,
@@ -212,7 +208,6 @@ mod tests {
             })
         ));
 
-        // Test exceeding max length during creation
         let too_many_bits = vec![true; 4];
         let result = BitList::<3>::from_vec(too_many_bits);
         assert!(matches!(
@@ -223,7 +218,6 @@ mod tests {
             })
         ));
 
-        // Test deserializing invalid data
         let result = BitList::<32>::deserialize(&[]);
         assert!(matches!(
             result,
@@ -233,7 +227,6 @@ mod tests {
             })
         ));
 
-        // Test deserializing data without delimiter bit
         let result = BitList::<32>::deserialize(&[0]);
         assert!(matches!(result, Err(SSZError::OffsetOutOfBounds)));
     }
@@ -320,31 +313,26 @@ mod tests {
 
     #[test]
     fn test_bitlist_merkleization() {
-        // Test empty list
         let empty: BitList<32> = BitList::default();
         let root = empty.hash_tree_root().expect("can merkleize empty list");
         assert_ne!(root, B256::default());
 
-        // Test single bit
         let mut single = BitList::<32>::default();
         single.push(true).unwrap();
         let root_single = single.hash_tree_root().expect("can merkleize single bit");
-        assert_ne!(root_single, root); // Should be different from empty
+        assert_ne!(root_single, root);
 
-        // Test multiple bits
         let mut multi = BitList::<32>::default();
         multi.push(true).unwrap();
         multi.push(false).unwrap();
         multi.push(true).unwrap();
         let root_multi = multi.hash_tree_root().expect("can merkleize multiple bits");
-        assert_ne!(root_multi, root_single); // Should be different from single
+        assert_ne!(root_multi, root_single);
 
-        // Test max length
         let max_bits = vec![true; 32];
         let max_list = BitList::<32>::from_vec(max_bits).unwrap();
         max_list.hash_tree_root().expect("can merkleize max length");
 
-        // Test length limit
         let too_long = vec![true; 33];
         let result = BitList::<32>::from_vec(too_long);
         assert!(result.is_err());
@@ -371,8 +359,6 @@ mod tests {
             .expect("should compute merkle root");
 
         assert_ne!(root, [0u8; 32], "Merkle root should not be all zero");
-
-        println!("Merkle root for BitList<9>: {}", root);
     }
     #[test]
     fn test_ssz_dev_verification() {
@@ -388,11 +374,6 @@ mod tests {
             B256::from_hex("0xfd47fe3518c2c13bd18426507ff14d4a05cb3fb932fc1e2e48c3b2cd4c1adda1")
                 .expect("valid hex")
         );
-
-        println!(
-            "Expected root: 0xfd47fe3518c2c13bd18426507ff14d4a05cb3fb932fc1e2e48c3b2cd4c1adda1"
-        );
-        println!("Actual root:   {}", root);
     }
     #[test]
     fn test_ssz_dev_verification_1() {
@@ -409,9 +390,5 @@ mod tests {
             B256::from_hex("0x3bbaf125dcf193d127c1949c44819d82fea1a4d3281c4300bb6901721e00ee6d")
                 .expect("valid hex")
         );
-        println!(
-            "Expected root: 0x3bbaf125dcf193d127c1949c44819d82fea1a4d3281c4300bb6901721e00ee6d"
-        );
-        println!("Actual root:   {}", root);
     }
 }

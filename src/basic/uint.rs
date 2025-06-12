@@ -102,7 +102,7 @@ impl SszTypeInfo for U256 {
 macro_rules! impl_uint_merkleize {
     ($type:ty, $bytes:expr) => {
         impl Merkleize for $type {
-            /// returns `hash_tree_root` for uint
+            /// Returns `hash_tree_root` for uint
             fn hash_tree_root(&self) -> Result<B256, SSZError> {
                 let bytes = self.to_le_bytes();
                 let mut buf = [0u8; 32];
@@ -130,6 +130,7 @@ impl Merkleize for U256 {
 
 #[cfg(test)]
 mod tests {
+
     use alloy_primitives::hex;
 
     use super::*;
@@ -172,7 +173,6 @@ mod tests {
     }
     #[test]
     fn test_uint_hash_tree_root() {
-        // Test u8
         let value_u8: u8 = 0xFF;
         let root_u8 = value_u8.hash_tree_root().unwrap();
         assert_eq!(
@@ -182,7 +182,6 @@ mod tests {
             ))
         );
 
-        // Test u16
         let value_u16: u16 = 0xFFFF;
         let root_u16 = value_u16.hash_tree_root().unwrap();
         assert_eq!(
@@ -215,7 +214,6 @@ mod tests {
 
     #[test]
     fn test_uint_hash_tree_root_zero() {
-        // Test zero values are properly padded
         let zero_u64 = 0u64;
         let root = zero_u64.hash_tree_root().unwrap();
         assert_eq!(

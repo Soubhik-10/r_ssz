@@ -1,3 +1,5 @@
+//! List of composite modules.
+
 extern crate alloc;
 
 mod bitvector;

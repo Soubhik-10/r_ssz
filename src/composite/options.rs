@@ -1,4 +1,4 @@
-//! Option aka Some and None
+//! ! Serializes,deserializes and merkleization of options.
 use alloy_primitives::B256;
 
 use crate::{Merkleize, SSZError, SimpleSerialize, SszTypeInfo, merkleization::mix_in_selector};

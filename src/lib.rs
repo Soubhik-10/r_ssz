@@ -1,3 +1,5 @@
+//! Contains the base modules.
+
 extern crate alloc;
 
 pub mod basic;

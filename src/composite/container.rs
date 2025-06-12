@@ -1,14 +1,16 @@
-// ! Serializes and deserializes container
+// ! Serializes,deserializes and merkleization of container
 
 use crate::error::SSZError;
 use crate::ssz::SimpleSerialize;
 
+/// Basic container for testing.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Foo {
     pub a: u32,
     pub b: u8,
 }
 
+/// Serialization and deserialization of `Foo`.
 impl SimpleSerialize for Foo {
     fn serialize(&self) -> Result<Vec<u8>, SSZError> {
         let mut bytes = Vec::new();
@@ -28,6 +30,7 @@ impl SimpleSerialize for Foo {
     }
 }
 
+/// `SszTypeInfo` for `Foo`.
 impl crate::ssz::SszTypeInfo for Foo {
     fn is_fixed_size() -> bool {
         true
@@ -41,6 +44,8 @@ impl crate::ssz::SszTypeInfo for Foo {
         false
     }
 }
+
+/// Merkleization of `Foo`.
 impl crate::ssz::Merkleize for Foo {
     fn hash_tree_root(&self) -> Result<alloy_primitives::B256, SSZError> {
         let a_root = self.a.hash_tree_root()?;
@@ -67,12 +72,10 @@ impl SimpleSerialize for TestComposite {
     }
 
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
-        // Deserialize name (bool)
         let (name, rest) = {
             let name = bool::deserialize(&data[0..1])?;
             (name, &data[1..])
         };
-        // Deserialize value (u32)
         let value = u32::deserialize(rest)?;
         Ok(TestComposite { name, value })
     }
@@ -104,13 +107,12 @@ impl crate::ssz::Merkleize for TestComposite {
 
 #[cfg(test)]
 mod test {
-    use alloy_primitives::B256;
-    use alloy_primitives::hex;
-
     use crate::container::Foo;
     use crate::container::TestComposite;
     use crate::ssz::Merkleize;
     use crate::ssz::SimpleSerialize;
+    use alloy_primitives::B256;
+    use alloy_primitives::hex;
 
     #[test]
     pub fn test_container_roundtrip() {
@@ -142,25 +144,22 @@ mod test {
         };
         let root = TestComposite::hash_tree_root(&original).expect("Hash tree root failed");
         println!("Hash tree root: {:?}", root);
-        // Serialize
         let serialized = original.serialize().expect("Serialization failed");
-        println!("Serialized: {:?}", serialized);
-
-        // Deserialize
         let deserialized =
             super::TestComposite::deserialize(&serialized).expect("Deserialization failed");
-        println!("Deserialized: {:?}", deserialized);
-        // Check equality
         assert_eq!(original.name, deserialized.name);
         assert_eq!(original.value, deserialized.value);
         let a: u16 = 56;
         let opa: Option<u16> = Some(a);
-        let opasr = opa.serialize().unwrap();
-        let asr = a.serialize().unwrap();
-        println!("a: {asr:?}");
-        println!("opa: {opasr:?}");
         let root = u16::hash_tree_root(&a).unwrap();
         let op_root = Option::<u16>::hash_tree_root(&opa).unwrap();
-        println!("root:{}, op_root{}", root, op_root);
+        let expected_a_root = alloy_primitives::B256::from(alloy_primitives::hex!(
+            "0x3800000000000000000000000000000000000000000000000000000000000000"
+        ));
+        let expected_opa_root = alloy_primitives::B256::from(alloy_primitives::hex!(
+            "0x7e8c63098a2af54deed7308a992a823805d46b97d91a5b750fb38c98da142e59"
+        ));
+        assert_eq!(root, expected_a_root);
+        assert_eq!(op_root, expected_opa_root);
     }
 }
