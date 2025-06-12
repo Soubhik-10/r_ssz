@@ -30,7 +30,8 @@ using [`@chainsafe/ssz`](https://github.com/ChainSafe/ssz/tree/master/packages/s
 
 ## 👥 Contributors
 
-[![Contributors](https://contrib.rocks/image?repo=Soubhik-10/r_ssz)](https://github.com/Soubhik-10/r_ssz/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=Soubhik-10/r_ssz&cache-bust=20250612)](https://github.com/Soubhik-10/r_ssz/graphs/contributors)
+
 
 👉 See the [full contributor list](https://github.com/Soubhik-10/r_ssz/graphs/contributors).
 
