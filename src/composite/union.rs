@@ -1,5 +1,6 @@
 // ! Serializes,deserializes and merkleization of union
 
+use crate::SimpleDeserialize;
 use crate::{Merkleize, SSZError, SimpleSerialize, SszTypeInfo, merkleization::mix_in_selector};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -46,7 +47,9 @@ impl SimpleSerialize for MyUnion {
             }
         }
     }
+}
 
+impl SimpleDeserialize for MyUnion {
     /// Deserializes `MyUnion`.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if data.is_empty() {
@@ -136,7 +139,9 @@ impl SimpleSerialize for BadUnion {
             }
         }
     }
+}
 
+impl SimpleDeserialize for BadUnion {
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if data.is_empty() {
             return Err(SSZError::ExpectedFurtherInput);
@@ -220,7 +225,9 @@ impl SimpleSerialize for Foo {
             }
         }
     }
+}
 
+impl SimpleDeserialize for Foo {
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if data.is_empty() {
             return Err(SSZError::ExpectedFurtherInput);

@@ -1,5 +1,6 @@
 //! Serializes , deserializes and merkleization of container.
 
+use crate::SimpleDeserialize;
 use crate::error::SSZError;
 use crate::ssz::SimpleSerialize;
 use alloc::vec::Vec;
@@ -11,7 +12,7 @@ pub struct Foo {
     pub b: u8,
 }
 
-/// Serialization and deserialization of `Foo`.
+/// Serialization of `Foo`.
 impl SimpleSerialize for Foo {
     fn serialize(&self) -> Result<Vec<u8>, SSZError> {
         let mut bytes = Vec::new();
@@ -19,7 +20,10 @@ impl SimpleSerialize for Foo {
         bytes.extend(self.b.serialize()?);
         Ok(bytes)
     }
+}
 
+/// Deserialization of `Foo`.
+impl SimpleDeserialize for Foo {
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if data.len() < 5 {
             return Err(SSZError::ExpectedFurtherInput);
@@ -71,7 +75,9 @@ impl SimpleSerialize for TestComposite {
         bytes.extend(self.value.serialize()?);
         Ok(bytes)
     }
+}
 
+impl SimpleDeserialize for TestComposite {
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         let (name, rest) = {
             let name = bool::deserialize(&data[0..1])?;
@@ -108,6 +114,7 @@ impl crate::ssz::Merkleize for TestComposite {
 
 #[cfg(test)]
 mod test {
+    use crate::SimpleDeserialize;
     use crate::container::Foo;
     use crate::container::TestComposite;
     use crate::ssz::Merkleize;
