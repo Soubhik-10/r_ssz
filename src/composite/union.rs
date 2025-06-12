@@ -1,6 +1,8 @@
 // ! Serializes,deserializes and merkleization of union
 
 use crate::{Merkleize, SSZError, SimpleSerialize, SszTypeInfo, merkleization::mix_in_selector};
+use alloc::vec;
+use alloc::vec::Vec;
 use alloy_primitives::B256;
 
 /// Basic container for serialization,deserialization and merkleization.

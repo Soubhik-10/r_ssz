@@ -2,6 +2,7 @@
 
 use crate::error::SSZError;
 use crate::ssz::SimpleSerialize;
+use alloc::vec::Vec;
 
 /// Basic container for testing.
 #[derive(Debug, Clone, PartialEq)]

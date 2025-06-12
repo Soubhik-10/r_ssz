@@ -1,4 +1,4 @@
-name: Rust Lint & Clippy
+name: Lint & Clippy
 
 on: [push, pull_request]
 

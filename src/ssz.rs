@@ -1,6 +1,7 @@
 //! This module provides a simple serialization and deserialization mechanism for data structures.
 
 use crate::SSZError;
+use alloc::vec::Vec;
 use alloy_primitives::B256;
 
 /// The `SimpleSerialize` trait defines methods for serializing and deserializing data structures

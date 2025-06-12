@@ -4,7 +4,10 @@ use crate::{
     Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
     merkleization::{merkleize, mix_in_length, pack},
 };
+use alloc::vec;
+use alloc::vec::Vec;
 use alloy_primitives::B256;
+use core::{option::Option, result::Result};
 
 #[derive(Debug, PartialEq)]
 pub struct BitList<const N: usize> {
@@ -178,6 +181,7 @@ impl<const N: usize> Merkleize for BitList<N> {
 mod tests {
 
     use super::*;
+    use alloc::string::ToString;
     use alloy_primitives::hex::FromHex;
 
     #[test]

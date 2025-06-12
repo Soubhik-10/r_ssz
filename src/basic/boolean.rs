@@ -1,13 +1,15 @@
 //! Serialization deserialization and merkleization for boolean values.
 
-use alloy_primitives::B256;
-
 use crate::{
     Merkleize,
     SSZError::{self, *},
     SszTypeInfo,
     ssz::SimpleSerialize,
 };
+use alloc::vec;
+use alloc::vec::Vec;
+use alloy_primitives::B256;
+use core::{option::Option, result::Result};
 
 impl SimpleSerialize for bool {
     /// Serializes a boolean value.

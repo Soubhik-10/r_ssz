@@ -200,6 +200,7 @@ mod tests {
 
     use super::*;
     use crate::ssz::SimpleSerialize;
+    use alloc::vec;
     use alloy_primitives::{B256, hex};
 
     #[test]
@@ -215,8 +216,6 @@ mod tests {
     fn test_vec_variable_size_serialization() {
         let v: Vec<Vec<u8>> = vec![vec![1, 2], vec![3, 4, 5], vec![6]];
         let serialized = v.serialize().expect("serialize variable size vec");
-        print!("Normal: {v:?}");
-        print!("Serialized: {serialized:?}");
         let deserialized =
             Vec::<Vec<u8>>::deserialize(&serialized).expect("deserialize variable size vec");
         assert_eq!(v, deserialized);

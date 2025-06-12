@@ -4,6 +4,6 @@ version = "0.0.1"
 edition = "2024"
 
 [dependencies]
-alloy-primitives = "1.2.0"
-thiserror = "2.0.12"
-sha2 = "0.10.9"
+alloy-primitives = { version = "1.2.0", default-features = false }
+thiserror = { version = "2.0.12", default-features = false }
+sha2 = { version = "0.10.9", default-features = false }

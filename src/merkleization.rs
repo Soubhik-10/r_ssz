@@ -1,6 +1,7 @@
 //! SSZ Merkleization helper functions.
 
 use crate::SSZError;
+use alloc::vec::Vec;
 use alloy_primitives::B256;
 use sha2::{Digest, Sha256};
 

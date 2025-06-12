@@ -4,6 +4,7 @@ use crate::{
     BYTES_PER_CHUNK, Merkleize, SSZError, SimpleSerialize, SszTypeInfo,
     merkleization::{merkleize, mix_in_length, pack},
 };
+use alloc::vec::Vec;
 use alloy_primitives::B256;
 use core::convert::TryInto;
 
@@ -179,6 +180,7 @@ where
 mod tests {
 
     use crate::{Merkleize, SimpleSerialize};
+    use alloc::vec;
     use alloy_primitives::{
         B256,
         hex::{self, FromHex},
