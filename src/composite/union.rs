@@ -1,7 +1,9 @@
-use alloy_primitives::B256;
+// ! Serializes,deserializes and merkleization of union
 
 use crate::{Merkleize, SSZError, SimpleSerialize, SszTypeInfo, merkleization::mix_in_selector};
+use alloy_primitives::B256;
 
+/// Basic container for serialization,deserialization and merkleization.
 #[derive(Debug, PartialEq)]
 pub enum MyUnion {
     None,
@@ -10,16 +12,19 @@ pub enum MyUnion {
 }
 
 impl SszTypeInfo for MyUnion {
+    /// Returns false since `MyUnion` is not fixed size.
     fn is_fixed_size() -> bool {
         false
     }
 
+    /// Returns `None` since `MyUnion` is not fixed size.
     fn fixed_size() -> Option<usize> {
         None
     }
 }
 
 impl SimpleSerialize for MyUnion {
+    /// Serializes `MyUnion`.
     fn serialize(&self) -> Result<Vec<u8>, SSZError> {
         match self {
             MyUnion::None => Ok(vec![0]),
@@ -40,6 +45,7 @@ impl SimpleSerialize for MyUnion {
         }
     }
 
+    /// Deserializes `MyUnion`.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if data.is_empty() {
             return Err(SSZError::ExpectedFurtherInput);
@@ -82,6 +88,7 @@ impl SimpleSerialize for MyUnion {
     }
 }
 
+/// Implements `Merkleization` for `MyUnion`.
 impl Merkleize for MyUnion {
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
         match self {

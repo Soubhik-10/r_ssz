@@ -1,4 +1,4 @@
-// ! Serialization and deserialization for BitVector
+// ! Serialization,deserialization and merkleization for BitVector
 
 use alloy_primitives::B256;
 
@@ -85,10 +85,9 @@ impl<const N: usize> SimpleSerialize for BitVector<N> {
     }
 }
 
-/// implements `hash_tree_root` for BitVector
+/// Implements `hash_tree_root` for BitVector
 impl<const N: usize> Merkleize for BitVector<N> {
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
-        // Pack the bits into bytes
         let mut bytes = vec![0u8; N.div_ceil(8)];
         for (i, &bit) in self.bits.iter().enumerate() {
             if bit {
@@ -96,15 +95,9 @@ impl<const N: usize> Merkleize for BitVector<N> {
             }
         }
 
-        // Pack bytes into BYTES_PER_CHUNK-byte chunks
         let chunks = pack_bits(&bytes);
-
-        // Calculate chunk count limit for bitvector: (N + 255) // 256
         let chunk_count = Self::chunk_count();
-
-        // Merkleize with chunk count limit
         let root = merkleize(&chunks, Some(chunk_count))?;
-
         Ok(root)
     }
 
@@ -116,9 +109,8 @@ impl<const N: usize> Merkleize for BitVector<N> {
 #[cfg(test)]
 mod tests {
 
-    use alloy_primitives::hex;
-
     use super::*;
+    use alloy_primitives::hex;
 
     #[test]
     fn test_bitvector_serialize() {
@@ -162,7 +154,6 @@ mod tests {
 
     #[test]
     fn test_bitvector_merkleization() {
-        // Test empty bitvector
         let empty = BitVector::<8>::new();
         let root = empty.hash_tree_root().expect("can merkleize empty");
         assert_eq!(
@@ -172,20 +163,17 @@ mod tests {
             ))
         );
 
-        // Test single bit set
         let mut single = BitVector::<8>::new();
         single.set(3, true).unwrap();
         let root_single = single.hash_tree_root().expect("can merkleize single");
         assert_ne!(root_single, root);
 
-        // Test multiple bits
         let mut multi = BitVector::<8>::new();
         multi.set(3, true).unwrap();
         multi.set(4, true).unwrap();
         let root_multi = multi.hash_tree_root().expect("can merkleize multi");
         assert_ne!(root_multi, root_single);
 
-        // Test chunk count calculation
         assert_eq!(BitVector::<256>::chunk_count(), 1);
         assert_eq!(BitVector::<257>::chunk_count(), 2);
     }

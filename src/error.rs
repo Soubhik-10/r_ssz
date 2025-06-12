@@ -1,4 +1,5 @@
-//! Error variants for ssz
+//! Error variants for SSZ.
+
 use thiserror::Error;
 
 #[derive(Debug, Error, PartialEq, Eq)]
