@@ -15,15 +15,12 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Install Rust
+      - name: Install Rust with no_std target
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: thumbv7em-none-eabihf
           override: true
-
-      - name: Add no_std target
-        run: rustup target add thumbv7em-none-eabihf
 
       - name: Build without std
         run: cargo build --target thumbv7em-none-eabihf --no-default-features
