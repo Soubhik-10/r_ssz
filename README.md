@@ -49,7 +49,7 @@ using [`@chainsafe/ssz`](https://github.com/ChainSafe/ssz/tree/master/packages/s
 Add to `Cargo.toml`:
 
 ```toml
-r_ssz = { git = "https://github.com/Soubhik-10/r_ssz" }
+r_ssz = "0.1.0"
 
 
 ```
