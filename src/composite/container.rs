@@ -14,11 +14,11 @@ pub struct Foo {
 
 /// Serialization of `Foo`.
 impl SimpleSerialize for Foo {
-    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
-        let mut bytes = Vec::new();
-        bytes.extend(self.a.serialize()?);
-        bytes.extend(self.b.serialize()?);
-        Ok(bytes)
+    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
+        let mut written = 0;
+        written += self.a.serialize(buffer)?;
+        written += self.b.serialize(buffer)?;
+        Ok(written)
     }
 }
 
@@ -69,11 +69,11 @@ pub struct TestComposite {
 }
 
 impl SimpleSerialize for TestComposite {
-    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
-        let mut bytes = Vec::new();
-        bytes.extend(self.name.serialize()?);
-        bytes.extend(self.value.serialize()?);
-        Ok(bytes)
+    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
+        let mut written = 0;
+        written += self.name.serialize(buffer)?;
+        written += self.value.serialize(buffer)?;
+        Ok(written)
     }
 }
 
@@ -119,14 +119,18 @@ mod test {
     use crate::container::TestComposite;
     use crate::ssz::Merkleize;
     use crate::ssz::SimpleSerialize;
+    use alloc::vec;
     use alloy_primitives::B256;
     use alloy_primitives::hex;
 
     #[test]
     pub fn test_container_roundtrip() {
+        let mut buffer = vec![];
         let original = super::Foo { a: 12, b: 6 };
-        let serialized = original.serialize().expect("Serialization failed");
-        let deserialized = super::Foo::deserialize(&serialized).expect("Deserialization failed");
+        original
+            .serialize(&mut buffer)
+            .expect("Serialization failed");
+        let deserialized = super::Foo::deserialize(&mut buffer).expect("Deserialization failed");
         assert_eq!(original.a, deserialized.a);
         assert_eq!(original.b, deserialized.b);
     }
@@ -155,9 +159,12 @@ mod test {
             "0xf9c5ada16029ed1580188989686f19e749c006b2eac37d3ef087b824b31ba997"
         ));
         assert_eq!(root, expected_root);
-        let serialized = original.serialize().expect("Serialization failed");
+        let mut buffer = vec![];
+        original
+            .serialize(&mut buffer)
+            .expect("Serialization failed");
         let deserialized =
-            super::TestComposite::deserialize(&serialized).expect("Deserialization failed");
+            super::TestComposite::deserialize(&mut buffer).expect("Deserialization failed");
         assert_eq!(original.name, deserialized.name);
         assert_eq!(original.value, deserialized.value);
         let a: u16 = 56;

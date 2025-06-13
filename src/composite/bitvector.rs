@@ -53,7 +53,7 @@ impl<const N: usize> SszTypeInfo for BitVector<N> {
 
 impl<const N: usize> SimpleSerialize for BitVector<N> {
     /// Serializes a  bit vector.
-    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
+    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
         let byte_length = N.div_ceil(8);
         let mut bytes = vec![0u8; byte_length];
 
@@ -63,7 +63,8 @@ impl<const N: usize> SimpleSerialize for BitVector<N> {
             }
         }
 
-        Ok(bytes)
+        buffer.extend_from_slice(&bytes);
+        Ok(byte_length)
     }
 }
 
@@ -118,10 +119,12 @@ mod tests {
 
     #[test]
     fn test_bitvector_serialize() {
+        let mut buffer = vec![];
         let mut bv = BitVector::<8>::new();
         bv.set(3, true).unwrap();
         bv.set(4, true).unwrap();
-        assert_eq!(bv.serialize(), Ok(vec![24u8]));
+        let _ = bv.serialize(&mut buffer);
+        assert_eq!(buffer, vec![24u8]);
     }
 
     #[test]
@@ -145,6 +148,7 @@ mod tests {
 
     #[test]
     fn roundtrip_test() {
+        let mut buffer = vec![];
         let input = vec![24u8, 1u8];
         let bv = BitVector::<16>::deserialize(&input).unwrap();
         let expected = vec![
@@ -152,8 +156,8 @@ mod tests {
             false, false, false,
         ];
         assert_eq!(bv.bits, expected);
-        let serialized = bv.serialize().unwrap();
-        assert_eq!(serialized, input);
+        bv.serialize(&mut buffer).unwrap();
+        assert_eq!(buffer, input);
     }
 
     #[test]

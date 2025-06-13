@@ -28,24 +28,40 @@ impl SszTypeInfo for MyUnion {
 
 impl SimpleSerialize for MyUnion {
     /// Serializes `MyUnion`.
-    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
+    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
+        let start_len = buffer.len();
+
         match self {
-            MyUnion::None => Ok(vec![0]),
+            MyUnion::None => {
+                buffer.push(0);
+            }
 
             MyUnion::U32(val) => {
-                let mut out = vec![1];
-                let payload = val.serialize()?;
-                out.extend(payload);
-                Ok(out)
+                buffer.push(1);
+                val.serialize(buffer)?;
             }
 
             MyUnion::ByteList(vec) => {
-                let mut out = vec![2];
-                let payload = vec.serialize()?;
-                out.extend(payload);
-                Ok(out)
+                buffer.push(2);
+
+                if vec.is_empty() {
+                    // Handle empty list specially if needed
+                    buffer.extend(vec![0; 4]); // Empty list offset
+                } else {
+                    // For non-empty variable-length data, we need offset + data
+                    let offset_pos = buffer.len();
+                    buffer.extend(vec![0; 4]); // Placeholder for offset
+                    let data_start = buffer.len();
+                    vec.serialize(buffer)?;
+
+                    // Now fill in the offset (relative to start of union)
+                    let offset = (data_start - start_len) as u32;
+                    buffer[offset_pos..offset_pos + 4].copy_from_slice(&offset.to_le_bytes());
+                }
             }
         }
+
+        Ok(buffer.len() - start_len)
     }
 }
 
@@ -128,16 +144,27 @@ impl SszTypeInfo for BadUnion {
 }
 
 impl SimpleSerialize for BadUnion {
-    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
+    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
+        let start_len = buffer.len();
+
         match self {
-            BadUnion::None => Ok(vec![0]),
-            BadUnion::NothingAgain => Ok(vec![1]),
-            BadUnion::Reserved(v) => {
-                let mut out = vec![200];
-                out.push(*v);
-                Ok(out)
+            BadUnion::None => {
+                buffer.push(0); // Type tag 0 for None
+            }
+
+            BadUnion::NothingAgain => {
+                buffer.push(1); // Type tag 1 for NothingAgain
+            }
+
+            BadUnion::Reserved(byte) => {
+                buffer.push(2); // Using standard sequential tags (not 200)
+
+                // For fixed-size values, serialize directly
+                buffer.push(*byte);
             }
         }
+
+        Ok(buffer.len() - start_len)
     }
 }
 
@@ -208,22 +235,21 @@ impl SszTypeInfo for Foo {
 }
 
 impl SimpleSerialize for Foo {
-    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
+    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
+        let start_len = buffer.len();
+
         match self {
             Foo::A(val) => {
-                let mut out = vec![0];
-                let payload = val.serialize()?;
-                out.extend(payload);
-                Ok(out)
+                buffer.push(0); // Variant discriminator
+                val.serialize(buffer)?;
             }
-
             Foo::B(val) => {
-                let mut out = vec![1];
-                let payload = val.serialize()?;
-                out.extend(payload);
-                Ok(out)
+                buffer.push(1); // Variant discriminator
+                val.serialize(buffer)?;
             }
         }
+
+        Ok(buffer.len() - start_len)
     }
 }
 
@@ -282,40 +308,55 @@ mod tests {
     #[test]
     fn test_myunion_roundtrip_none() {
         let original = MyUnion::None;
-        let encoded = original.serialize().expect("Serialization failed");
-        let decoded = MyUnion::deserialize(&encoded).expect("Deserialization failed");
+        let mut buffer = vec![];
+        original
+            .serialize(&mut buffer)
+            .expect("Serialization failed");
+        let decoded = MyUnion::deserialize(&mut buffer).expect("Deserialization failed");
         assert_eq!(original, decoded);
     }
 
     #[test]
     fn test_myunion_roundtrip_u32() {
         let original = MyUnion::U32(42);
-        let encoded = original.serialize().expect("Serialization failed");
-        let decoded = MyUnion::deserialize(&encoded).expect("Deserialization failed");
+        let mut buffer = vec![];
+        original
+            .serialize(&mut buffer)
+            .expect("Serialization failed");
+        let decoded = MyUnion::deserialize(&mut buffer).expect("Deserialization failed");
         assert_eq!(original, decoded);
     }
 
     #[test]
     fn test_myunion_roundtrip_bytelist() {
         let original = MyUnion::ByteList(vec![1, 2, 3, 4, 5]);
-        let encoded = original.serialize().expect("Serialization failed");
-        let decoded = MyUnion::deserialize(&encoded).expect("Deserialization failed");
+        let mut buffer = vec![];
+        original
+            .serialize(&mut buffer)
+            .expect("Serialization failed");
+        let decoded = MyUnion::deserialize(&mut buffer).expect("Deserialization failed");
         assert_eq!(original, decoded);
     }
 
     #[test]
     fn test_badunion_roundtrip_valid() {
         let original = BadUnion::NothingAgain;
-        let encoded = original.serialize().expect("Serialization failed");
-        let decoded = BadUnion::deserialize(&encoded).expect("Deserialization failed");
+        let mut buffer = vec![];
+        original
+            .serialize(&mut buffer)
+            .expect("Serialization failed");
+        let decoded = BadUnion::deserialize(&mut buffer).expect("Deserialization failed");
         assert_eq!(original, decoded);
     }
 
     #[test]
     fn test_badunion_reserved_selector_violation() {
         let original = BadUnion::Reserved(42);
-        let encoded = original.serialize().expect("Serialization failed");
-        let decoded = BadUnion::deserialize(&encoded);
+        let mut buffer = vec![];
+        original
+            .serialize(&mut buffer)
+            .expect("Serialization failed");
+        let decoded = BadUnion::deserialize(&mut buffer);
         match decoded {
             Err(SSZError::InvalidSelector { selector, reason }) => {
                 assert_eq!(selector, 200);
@@ -328,13 +369,15 @@ mod tests {
     #[test]
     fn encode_union() {
         let value = Foo::A(12u32);
-        let result = value.serialize();
+        let mut buffer = vec![];
+        let _ = value.serialize(&mut buffer);
         let expected = [0u8, 12u8, 0u8, 0u8, 0u8];
-        assert_eq!(result.unwrap(), expected);
+        assert_eq!(buffer, expected);
         let value = Foo::B(6u8);
-        let result = value.serialize();
+        let mut buffer = vec![];
+        let _ = value.serialize(&mut buffer);
         let expected = [1u8, 6u8];
-        assert_eq!(result.unwrap(), expected);
+        assert_eq!(buffer, expected);
     }
 
     #[test]

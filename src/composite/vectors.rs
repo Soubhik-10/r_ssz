@@ -9,6 +9,7 @@ use crate::{
     merkleization::merkleize,
     ssz::SimpleSerialize,
 };
+use alloc::vec;
 use alloc::vec::Vec;
 use alloy_primitives::B256;
 
@@ -31,64 +32,48 @@ impl<T> SimpleSerialize for Vec<T>
 where
     T: SimpleSerialize + SszTypeInfo,
 {
-    /// Serializes the vector.
-    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
+    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
+        let start_len = buffer.len();
+
         if T::is_fixed_size() {
-            // Fixed-size elements: concatenate serialized items directly
-            let mut out = Vec::with_capacity(self.len() * T::fixed_size().unwrap());
+            // Fixed-size elements - direct concatenation
+            let fixed_size = T::fixed_size().ok_or(SSZError::InvalidByte)?;
+            buffer.reserve(self.len() * fixed_size);
+
             for item in self {
-                out.extend(item.serialize()?);
+                item.serialize(buffer)?;
             }
-            Ok(out)
         } else {
-            // Variable-size elements: serialize with offsets prefix (SSZ variable vector)
-            // 1. Serialize fixed parts (offsets)
-            // 2. Serialize variable parts (actual data)
-            let mut fixed_parts = Vec::with_capacity(self.len());
-            let mut variable_parts = Vec::with_capacity(self.len());
-            let mut fixed_lengths = Vec::with_capacity(self.len());
-            let mut variable_lengths = Vec::with_capacity(self.len());
+            // Variable-size elements - offset-based serialization
+            let offsets_len = self.len() * crate::BYTES_PER_LENGTH_OFFSET;
+            buffer.reserve(offsets_len);
+
+            // First pass - serialize all items to temporary buffers and calculate offsets
+            let mut data_parts = Vec::with_capacity(self.len());
+            let mut total_data_len = 0;
 
             for item in self {
-                let serialized = item.serialize()?;
-                if T::is_fixed_size() {
-                    fixed_parts.push(Some(serialized.clone()));
-                    variable_parts.push(Vec::new());
-                    fixed_lengths.push(serialized.len());
-                    variable_lengths.push(0);
-                } else {
-                    fixed_parts.push(None);
-                    variable_parts.push(serialized.clone());
-                    fixed_lengths.push(crate::BYTES_PER_LENGTH_OFFSET);
-                    variable_lengths.push(serialized.len());
-                }
+                let mut part = Vec::new();
+                item.serialize(&mut part)?;
+                total_data_len += part.len();
+                data_parts.push(part);
             }
 
-            let mut variable_offsets = Vec::with_capacity(self.len());
-            let mut offset_acc = fixed_lengths.iter().sum::<usize>();
-            for len in &variable_lengths {
-                variable_offsets.push(offset_acc);
-                offset_acc += len;
+            // Write offsets (pointing to the start of each variable-length element)
+            let mut current_offset = offsets_len;
+            for part in &data_parts {
+                buffer.extend(&(current_offset as u32).to_le_bytes());
+                current_offset += part.len();
             }
 
-            let fixed_parts: Vec<Vec<u8>> = fixed_parts
-                .into_iter()
-                .enumerate()
-                .map(|(i, part)| {
-                    part.unwrap_or_else(|| (variable_offsets[i] as u32).to_le_bytes().to_vec())
-                })
-                .collect();
-
-            let mut out = Vec::with_capacity(offset_acc);
-            for part in fixed_parts.iter() {
-                out.extend(part);
+            // Write actual data
+            buffer.reserve(total_data_len);
+            for part in data_parts {
+                buffer.extend(part);
             }
-            for part in variable_parts.iter() {
-                out.extend(part);
-            }
-
-            Ok(out)
         }
+
+        Ok(buffer.len() - start_len)
     }
 }
 
@@ -182,7 +167,8 @@ where
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
         if T::is_basic_type() {
             // For basic types: Serialize, pack into chunks, then merkleize.
-            let serialized = self.serialize()?;
+            let mut serialized = vec![];
+            self.serialize(&mut serialized)?;
             let packed = pack(&serialized);
             let chunk_count = chunk_count(SSZType::VectorBasic {
                 elem_size: T::fixed_size().unwrap(),
@@ -212,28 +198,32 @@ mod tests {
     #[test]
     fn test_vec_fixed_size_serialization() {
         let v: Vec<u16> = vec![1, 2, 3, 4];
-        let serialized = v.serialize().expect("serialize fixed size vec");
+        let mut buffer = vec![];
+        v.serialize(&mut buffer).expect("serialize fixed size vec");
         let deserialized =
-            Vec::<u16>::deserialize(&serialized).expect("deserialize fixed size vec");
+            Vec::<u16>::deserialize(&mut buffer).expect("deserialize fixed size vec");
         assert_eq!(v, deserialized);
     }
 
     #[test]
     fn test_vec_variable_size_serialization() {
         let v: Vec<Vec<u8>> = vec![vec![1, 2], vec![3, 4, 5], vec![6]];
-        let serialized = v.serialize().expect("serialize variable size vec");
+        let mut buffer = vec![];
+        v.serialize(&mut buffer)
+            .expect("serialize variable size vec");
         let deserialized =
-            Vec::<Vec<u8>>::deserialize(&serialized).expect("deserialize variable size vec");
+            Vec::<Vec<u8>>::deserialize(&mut buffer).expect("deserialize variable size vec");
         assert_eq!(v, deserialized);
     }
 
     #[test]
     fn test_vec_empty() {
         let v: Vec<u8> = Vec::new();
-        let serialized = v.serialize().expect("serialize empty vec");
-        let deserialized = Vec::<u8>::deserialize(&serialized).expect("deserialize empty vec");
+        let mut buffer = vec![];
+        v.serialize(&mut buffer).expect("serialize empty vec");
+        let deserialized = Vec::<u8>::deserialize(&mut buffer).expect("deserialize empty vec");
         assert_eq!(v, deserialized);
-        assert!(serialized.is_empty());
+        assert!(buffer.is_empty());
     }
 
     #[test]
