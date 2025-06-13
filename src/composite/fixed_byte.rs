@@ -1,3 +1,5 @@
+//! Serialization , deserialization and merkleization for FixedBytes.
+
 use crate::{Merkleize, SSZError, SimpleDeserialize, SimpleSerialize, SszTypeInfo};
 use alloc::vec::Vec;
 use alloy_primitives::{B256, FixedBytes};

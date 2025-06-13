@@ -213,7 +213,7 @@ dependencies = [
 
 [[package]]
 name = "r_ssz"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "alloy-primitives",
  "sha2",
