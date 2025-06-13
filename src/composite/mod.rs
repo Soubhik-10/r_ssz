@@ -16,4 +16,6 @@ pub mod list;
 
 pub mod union;
 
+pub mod fixed_byte;
+
 pub mod container;
