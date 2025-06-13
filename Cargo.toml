@@ -1,6 +1,6 @@
 [package]
 name = "r_ssz"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Soubhik Singha Mahapatra <soubhiksinghamahapatra@gmail.com>, Ishika Choudhury <ishikac720@gmail.com>"]
 edition = "2024"
 description = "SSZ Serialization and Merkleization for Ethereum consensus types."
