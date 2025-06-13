@@ -77,7 +77,7 @@ impl<const N: usize> SszTypeInfo for BitList<N> {
 
 impl<const N: usize> SimpleSerialize for BitList<N> {
     /// Serializes a bit list.
-    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
+    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
         let bit_len = self.bits.len();
         if bit_len > N {
             return Err(SSZError::InvalidLength {
@@ -98,8 +98,8 @@ impl<const N: usize> SimpleSerialize for BitList<N> {
         let dbyte = bit_len / 8;
         let dbit = bit_len % 8;
         bytes[dbyte] |= 1 << dbit;
-
-        Ok(bytes)
+        buffer.extend_from_slice(&bytes);
+        Ok(byte_len)
     }
 }
 
@@ -153,7 +153,7 @@ impl<const N: usize> SimpleDeserialize for BitList<N> {
     }
 }
 
-/// Calculates `hash_tree_root` for BitList
+/// Calculates `hash_tree_root` for BitList.
 impl<const N: usize> Merkleize for BitList<N> {
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
         let bit_count = self.len();
@@ -189,11 +189,12 @@ mod tests {
     #[test]
     fn test_bitlist_edge_cases() {
         let empty: BitList<32> = BitList::default();
+        let mut buffer = vec![];
         assert_eq!(empty.len(), 0);
         assert!(empty.is_empty());
 
-        let encoding = empty.serialize().expect("can encode empty");
-        assert_eq!(encoding, vec![1]);
+        empty.serialize(&mut buffer).expect("can encode empty");
+        assert_eq!(buffer, vec![1]);
 
         let decoded = BitList::<32>::deserialize(&[1]).expect("can decode empty");
         assert_eq!(decoded, empty);
@@ -239,17 +240,20 @@ mod tests {
     #[test]
     fn test_bitlist_serialize() {
         let value: BitList<10> = BitList::default();
-        let encoding = (value).serialize().expect("can encode");
+        let mut buffer = vec![];
+        (value).serialize(&mut buffer).expect("can encode");
         let expected = [1u8];
-        assert_eq!(encoding, expected);
+        assert_eq!(buffer, expected);
 
+        let mut buffer = vec![];
         let mut value: BitList<32> = BitList::default();
         let _ = value.push(false);
         let _ = value.push(true);
-        let encoding = (value).serialize().expect("can encode");
+        (value).serialize(&mut buffer).expect("can encode");
         let expected = [6u8, 0u8];
-        assert_eq!(encoding, expected);
+        assert_eq!(buffer, expected);
 
+        let mut buffer = vec![];
         let mut value: BitList<32> = BitList::default();
         let _ = value.push(false);
         let _ = value.push(false);
@@ -260,9 +264,9 @@ mod tests {
         let _ = value.push(false);
         let _ = value.push(false);
 
-        let encoding = (value).serialize().expect("can encode");
+        (value).serialize(&mut buffer).expect("can encode");
         let expected = [24u8, 1u8];
-        assert_eq!(encoding, expected);
+        assert_eq!(buffer, expected);
     }
 
     #[test]
@@ -311,7 +315,8 @@ mod tests {
             .as_ref(),
         )
         .unwrap();
-        let buffer = input.serialize().expect("can serialize");
+        let mut buffer = vec![];
+        input.serialize(&mut buffer).expect("can serialize");
         let recovered = BitList::<32>::deserialize(&buffer).expect("can decode");
         assert_eq!(input, recovered);
     }

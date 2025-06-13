@@ -13,8 +13,10 @@ macro_rules! impl_uint {
     ($type:ty, $bytes:expr) => {
         impl SimpleSerialize for $type {
             /// Implements serialization for unsigned integers.
-            fn serialize(&self) -> Result<Vec<u8>, SSZError> {
-                Ok(self.to_le_bytes().to_vec())
+            fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
+                let bytes: [u8; $bytes] = self.to_le_bytes();
+                buffer.extend_from_slice(&bytes);
+                Ok(bytes.len())
             }
         }
 
@@ -43,8 +45,10 @@ impl_uint!(u128, 16);
 
 impl SimpleSerialize for U256 {
     /// Implements serialization for U256.
-    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
-        Ok(self.to_le_bytes::<{ BYTES }>().to_vec())
+    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
+        let bytes: [u8; 32] = self.to_le_bytes();
+        buffer.extend_from_slice(&bytes);
+        Ok(bytes.len())
     }
 }
 
@@ -108,7 +112,7 @@ impl SszTypeInfo for U256 {
 macro_rules! impl_uint_merkleize {
     ($type:ty, $bytes:expr) => {
         impl Merkleize for $type {
-            /// Returns `hash_tree_root` for uint
+            /// Returns `hash_tree_root` for uint.
             fn hash_tree_root(&self) -> Result<B256, SSZError> {
                 let bytes = self.to_le_bytes();
                 let mut buf = [0u8; 32];
@@ -126,7 +130,7 @@ impl_uint_merkleize!(u64, 8);
 impl_uint_merkleize!(u128, 16);
 
 impl Merkleize for U256 {
-    /// returns `hash_tree_root` for u256
+    /// Returns `hash_tree_root` for u256.
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
         let bytes: [u8; BYTES] = self.to_le_bytes();
         let hash = B256::from_slice(&bytes);
@@ -144,15 +148,23 @@ mod tests {
 
     #[test]
     fn test_uint_serialize() {
-        assert_eq!(42u8.serialize(), Ok(vec![42]));
-        assert_eq!(300u16.serialize(), Ok(vec![44, 1]));
-        assert_eq!(65536u32.serialize(), Ok(vec![0, 0, 1, 0]));
+        let mut buffer = vec![];
+        let _ = 42u8.serialize(&mut buffer);
+        assert_eq!(buffer, vec![42]);
+        let mut buffer = vec![];
+        let _ = 300u16.serialize(&mut buffer);
+        assert_eq!(buffer, vec![44, 1]);
+        let mut buffer = vec![];
+        let _ = 65536u32.serialize(&mut buffer);
+        assert_eq!(buffer, vec![0, 0, 1, 0]);
+        let mut buffer = vec![];
+        let _ = U256::from(65536).serialize(&mut buffer);
         assert_eq!(
-            U256::from(65536).serialize(),
-            Ok(vec![
+            buffer,
+            vec![
                 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0
-            ])
+            ]
         );
     }
 
@@ -172,8 +184,9 @@ mod tests {
     fn round_trip_uint() {
         let values: Vec<u64> = vec![0, 1, 255, 256, 65535, 65536, 4294967295];
         for &value in &values {
-            let serialized = value.serialize().unwrap();
-            let deserialized = u64::deserialize(&serialized).unwrap();
+            let mut buffer = vec![];
+            let _ = value.serialize(&mut buffer);
+            let deserialized = u64::deserialize(&mut buffer).unwrap();
             assert_eq!(value, deserialized);
         }
     }

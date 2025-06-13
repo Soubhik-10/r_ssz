@@ -6,15 +6,15 @@ use crate::{
     SimpleDeserialize, SszTypeInfo,
     ssz::SimpleSerialize,
 };
-use alloc::vec;
 use alloc::vec::Vec;
 use alloy_primitives::B256;
 use core::{option::Option, result::Result};
 
 impl SimpleSerialize for bool {
     /// Serializes a boolean value.
-    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
-        if *self { Ok(vec![1]) } else { Ok(vec![0]) }
+    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
+        buffer.push(if *self { 1 } else { 0 });
+        Ok(buffer.len())
     }
 }
 
@@ -67,12 +67,17 @@ impl Merkleize for bool {
 mod tests {
 
     use super::*;
+    use alloc::vec;
     use alloy_primitives::hex::FromHex;
 
     #[test]
     fn test_bool_serialize() {
-        assert_eq!(true.serialize(), Ok(vec![1]));
-        assert_eq!(false.serialize(), Ok(vec![0]));
+        let mut buffer = vec![];
+        let _ = true.serialize(&mut buffer);
+        assert_eq!(buffer, vec![1]);
+        let mut buffer = vec![];
+        let _ = false.serialize(&mut buffer);
+        assert_eq!(buffer, vec![0]);
     }
 
     #[test]
@@ -98,14 +103,20 @@ mod tests {
 
     #[test]
     fn test_bool_roundtrip() {
+        let mut buffer = vec![];
         let original_true = true;
-        let serialized = original_true.serialize().expect("can serialize true");
-        let recovered_true = bool::deserialize(&serialized).expect("can deserialize true");
+        original_true
+            .serialize(&mut buffer)
+            .expect("can serialize true");
+        let recovered_true = bool::deserialize(&buffer).expect("can deserialize true");
         assert_eq!(original_true, recovered_true);
 
+        let mut buffer = vec![];
         let original_false = false;
-        let serialized = original_false.serialize().expect("can serialize false");
-        let recovered_false = bool::deserialize(&serialized).expect("can deserialize false");
+        original_false
+            .serialize(&mut buffer)
+            .expect("can serialize false");
+        let recovered_false = bool::deserialize(&buffer).expect("can deserialize false");
         assert_eq!(original_false, recovered_false);
     }
     #[test]

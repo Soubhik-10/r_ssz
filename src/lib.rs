@@ -1,5 +1,6 @@
 //! Contains the base modules.
 #![no_std]
+#![allow(clippy::unnecessary_mut_passed)]
 extern crate alloc;
 
 pub mod basic;

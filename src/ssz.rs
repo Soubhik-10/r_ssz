@@ -7,7 +7,7 @@ use alloy_primitives::B256;
 /// The `SimpleSerialize` trait defines methods for serializing data structures
 pub trait SimpleSerialize: Sized {
     /// Serializes the data structure into a byte vector.
-    fn serialize(&self) -> Result<Vec<u8>, SSZError>;
+    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError>;
 }
 
 /// The `SimpleDeserialize` trait defines methods for deserializing data structures

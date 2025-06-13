@@ -2,7 +2,6 @@
 
 use crate::SimpleDeserialize;
 use crate::{Merkleize, SSZError, SimpleSerialize, SszTypeInfo, merkleization::mix_in_selector};
-use alloc::vec;
 use alloc::vec::Vec;
 use alloy_primitives::B256;
 
@@ -30,15 +29,18 @@ where
     T: SimpleSerialize,
 {
     /// Serializes an option, encoding `None` as an empty byte vector and `Some` as the serialized value.
-    fn serialize(&self) -> Result<Vec<u8>, SSZError> {
+    fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
+        let start_len = buffer.len();
         match self {
             Some(value) => {
-                let mut bytes = vec![1]; // Tag for Some
-                bytes.extend(value.serialize()?);
-                Ok(bytes)
+                buffer.push(1); // Some tag
+                value.serialize(buffer)?;
             }
-            None => Ok(vec![0]), // Tag for None
+            None => {
+                buffer.push(0); // None tag
+            }
         }
+        Ok(buffer.len() - start_len)
     }
 }
 
@@ -92,15 +94,19 @@ mod tests {
     #[test]
     fn test_serialize_none() {
         let none_val: Option<u64> = None;
-        assert_eq!(none_val.serialize().unwrap(), vec![0]);
+        let mut buffer = vec![];
+        let _ = none_val.serialize(&mut buffer);
+        assert_eq!(buffer, vec![0]);
     }
 
     #[test]
     fn test_serialize_some() {
         let some_val: Option<u64> = Some(0x1122334455667788);
+        let mut buffer = vec![];
         let mut expected = vec![1];
         expected.extend_from_slice(&0x1122334455667788u64.to_le_bytes());
-        assert_eq!(some_val.serialize().unwrap(), expected);
+        some_val.serialize(&mut buffer).unwrap();
+        assert_eq!(buffer, expected);
     }
 
     #[test]
@@ -120,16 +126,18 @@ mod tests {
     #[test]
     fn test_roundtrip_none() {
         let none_val: Option<u64> = None;
-        let serialized = none_val.serialize().unwrap();
-        let deserialized = Option::<u64>::deserialize(&serialized).unwrap();
+        let mut buffer = vec![];
+        none_val.serialize(&mut buffer).unwrap();
+        let deserialized = Option::<u64>::deserialize(&mut buffer).unwrap();
         assert_eq!(deserialized, none_val);
     }
 
     #[test]
     fn test_roundtrip_some() {
         let some_val: Option<u64> = Some(987654321);
-        let serialized = some_val.serialize().unwrap();
-        let deserialized = Option::<u64>::deserialize(&serialized).unwrap();
+        let mut buffer = vec![];
+        some_val.serialize(&mut buffer).unwrap();
+        let deserialized = Option::<u64>::deserialize(&mut buffer).unwrap();
         assert_eq!(deserialized, some_val);
     }
 
