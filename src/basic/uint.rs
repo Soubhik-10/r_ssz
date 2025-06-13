@@ -186,7 +186,7 @@ mod tests {
         for &value in &values {
             let mut buffer = vec![];
             let _ = value.serialize(&mut buffer);
-            let deserialized = u64::deserialize(&mut buffer).unwrap();
+            let deserialized = u64::deserialize(&buffer).unwrap();
             assert_eq!(value, deserialized);
         }
     }

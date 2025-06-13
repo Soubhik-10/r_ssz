@@ -296,7 +296,7 @@ mod tests {
         original
             .serialize(&mut buffer)
             .expect("Serialization failed");
-        let decoded = MyUnion::deserialize(&mut buffer).expect("Deserialization failed");
+        let decoded = MyUnion::deserialize(&buffer).expect("Deserialization failed");
         assert_eq!(original, decoded);
     }
 
@@ -307,7 +307,7 @@ mod tests {
         original
             .serialize(&mut buffer)
             .expect("Serialization failed");
-        let decoded = MyUnion::deserialize(&mut buffer).expect("Deserialization failed");
+        let decoded = MyUnion::deserialize(&buffer).expect("Deserialization failed");
         assert_eq!(original, decoded);
     }
 
@@ -318,7 +318,7 @@ mod tests {
         original
             .serialize(&mut buffer)
             .expect("Serialization failed");
-        let decoded = MyUnion::deserialize(&mut buffer).expect("Deserialization failed");
+        let decoded = MyUnion::deserialize(&buffer).expect("Deserialization failed");
         assert_eq!(original, decoded);
     }
 
@@ -329,7 +329,7 @@ mod tests {
         original
             .serialize(&mut buffer)
             .expect("Serialization failed");
-        let decoded = BadUnion::deserialize(&mut buffer).expect("Deserialization failed");
+        let decoded = BadUnion::deserialize(&buffer).expect("Deserialization failed");
         assert_eq!(original, decoded);
     }
 
@@ -340,7 +340,7 @@ mod tests {
         original
             .serialize(&mut buffer)
             .expect("Serialization failed");
-        let decoded = BadUnion::deserialize(&mut buffer);
+        let decoded = BadUnion::deserialize(&buffer);
         match decoded {
             Err(SSZError::InvalidSelector { selector, reason }) => {
                 assert_eq!(selector, 200);

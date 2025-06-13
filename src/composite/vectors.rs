@@ -198,8 +198,7 @@ mod tests {
         let v: Vec<u16> = vec![1, 2, 3, 4];
         let mut buffer = vec![];
         v.serialize(&mut buffer).expect("serialize fixed size vec");
-        let deserialized =
-            Vec::<u16>::deserialize(&mut buffer).expect("deserialize fixed size vec");
+        let deserialized = Vec::<u16>::deserialize(&buffer).expect("deserialize fixed size vec");
         assert_eq!(v, deserialized);
     }
 
@@ -210,7 +209,7 @@ mod tests {
         v.serialize(&mut buffer)
             .expect("serialize variable size vec");
         let deserialized =
-            Vec::<Vec<u8>>::deserialize(&mut buffer).expect("deserialize variable size vec");
+            Vec::<Vec<u8>>::deserialize(&buffer).expect("deserialize variable size vec");
         assert_eq!(v, deserialized);
     }
 
@@ -219,7 +218,7 @@ mod tests {
         let v: Vec<u8> = Vec::new();
         let mut buffer = vec![];
         v.serialize(&mut buffer).expect("serialize empty vec");
-        let deserialized = Vec::<u8>::deserialize(&mut buffer).expect("deserialize empty vec");
+        let deserialized = Vec::<u8>::deserialize(&buffer).expect("deserialize empty vec");
         assert_eq!(v, deserialized);
         assert!(buffer.is_empty());
     }

@@ -130,7 +130,7 @@ mod test {
         original
             .serialize(&mut buffer)
             .expect("Serialization failed");
-        let deserialized = super::Foo::deserialize(&mut buffer).expect("Deserialization failed");
+        let deserialized = super::Foo::deserialize(&buffer).expect("Deserialization failed");
         assert_eq!(original.a, deserialized.a);
         assert_eq!(original.b, deserialized.b);
     }
@@ -164,7 +164,7 @@ mod test {
             .serialize(&mut buffer)
             .expect("Serialization failed");
         let deserialized =
-            super::TestComposite::deserialize(&mut buffer).expect("Deserialization failed");
+            super::TestComposite::deserialize(&buffer).expect("Deserialization failed");
         assert_eq!(original.name, deserialized.name);
         assert_eq!(original.value, deserialized.value);
         let a: u16 = 56;
