@@ -128,7 +128,7 @@ mod tests {
         let none_val: Option<u64> = None;
         let mut buffer = vec![];
         none_val.serialize(&mut buffer).unwrap();
-        let deserialized = Option::<u64>::deserialize(&mut buffer).unwrap();
+        let deserialized = Option::<u64>::deserialize(&buffer).unwrap();
         assert_eq!(deserialized, none_val);
     }
 
@@ -137,7 +137,7 @@ mod tests {
         let some_val: Option<u64> = Some(987654321);
         let mut buffer = vec![];
         some_val.serialize(&mut buffer).unwrap();
-        let deserialized = Option::<u64>::deserialize(&mut buffer).unwrap();
+        let deserialized = Option::<u64>::deserialize(&buffer).unwrap();
         assert_eq!(deserialized, some_val);
     }
 

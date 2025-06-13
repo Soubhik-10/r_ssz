@@ -198,7 +198,7 @@ mod tests {
         let arr: [u64; 3] = [10, 20, 30];
         let mut buffer = vec![];
         arr.serialize(&mut buffer).unwrap();
-        let deserialized = <[u64; 3]>::deserialize(&mut buffer).unwrap();
+        let deserialized = <[u64; 3]>::deserialize(&buffer).unwrap();
         assert_eq!(arr, deserialized);
     }
 
@@ -207,7 +207,7 @@ mod tests {
         let arr: [Option<u64>; 3] = [Some(42), None, Some(99)];
         let mut buffer = vec![];
         let _ = arr.serialize(&mut buffer).unwrap();
-        let deserialized = <[Option<u64>; 3]>::deserialize(&mut buffer).unwrap();
+        let deserialized = <[Option<u64>; 3]>::deserialize(&buffer).unwrap();
         assert_eq!(arr, deserialized);
     }
 
@@ -223,13 +223,13 @@ mod tests {
         let a = [22u8; 3];
         let mut buffer = vec![];
         a.serialize(&mut buffer).unwrap();
-        let recovered_a = <[u8; 3]>::deserialize(&mut buffer).unwrap();
+        let recovered_a = <[u8; 3]>::deserialize(&buffer).unwrap();
         assert_eq!(a, recovered_a);
 
         let a = [22u8; 333];
         let mut buffer = vec![];
         a.serialize(&mut buffer).unwrap();
-        let recovered_a = <[u8; 333]>::deserialize(&mut buffer).unwrap();
+        let recovered_a = <[u8; 333]>::deserialize(&buffer).unwrap();
         assert_eq!(a, recovered_a);
     }
 
