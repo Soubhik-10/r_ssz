@@ -112,7 +112,7 @@ impl SszTypeInfo for U256 {
 macro_rules! impl_uint_merkleize {
     ($type:ty, $bytes:expr) => {
         impl Merkleize for $type {
-            /// Returns `hash_tree_root` for uint
+            /// Returns `hash_tree_root` for uint.
             fn hash_tree_root(&self) -> Result<B256, SSZError> {
                 let bytes = self.to_le_bytes();
                 let mut buf = [0u8; 32];
@@ -130,7 +130,7 @@ impl_uint_merkleize!(u64, 8);
 impl_uint_merkleize!(u128, 16);
 
 impl Merkleize for U256 {
-    /// returns `hash_tree_root` for u256
+    /// Returns `hash_tree_root` for u256.
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
         let bytes: [u8; BYTES] = self.to_le_bytes();
         let hash = B256::from_slice(&bytes);

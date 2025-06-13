@@ -153,7 +153,7 @@ impl<const N: usize> SimpleDeserialize for BitList<N> {
     }
 }
 
-/// Calculates `hash_tree_root` for BitList
+/// Calculates `hash_tree_root` for BitList.
 impl<const N: usize> Merkleize for BitList<N> {
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
         let bit_count = self.len();

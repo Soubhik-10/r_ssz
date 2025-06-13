@@ -2,7 +2,6 @@
 
 use crate::SimpleDeserialize;
 use crate::{Merkleize, SSZError, SimpleSerialize, SszTypeInfo, merkleization::mix_in_selector};
-use alloc::vec;
 use alloc::vec::Vec;
 use alloy_primitives::B256;
 
@@ -43,21 +42,7 @@ impl SimpleSerialize for MyUnion {
 
             MyUnion::ByteList(vec) => {
                 buffer.push(2);
-
-                if vec.is_empty() {
-                    // Handle empty list specially if needed
-                    buffer.extend(vec![0; 4]); // Empty list offset
-                } else {
-                    // For non-empty variable-length data, we need offset + data
-                    let offset_pos = buffer.len();
-                    buffer.extend(vec![0; 4]); // Placeholder for offset
-                    let data_start = buffer.len();
-                    vec.serialize(buffer)?;
-
-                    // Now fill in the offset (relative to start of union)
-                    let offset = (data_start - start_len) as u32;
-                    buffer[offset_pos..offset_pos + 4].copy_from_slice(&offset.to_le_bytes());
-                }
+                vec.serialize(buffer)?;
             }
         }
 
@@ -149,17 +134,15 @@ impl SimpleSerialize for BadUnion {
 
         match self {
             BadUnion::None => {
-                buffer.push(0); // Type tag 0 for None
+                buffer.push(0);
             }
 
             BadUnion::NothingAgain => {
-                buffer.push(1); // Type tag 1 for NothingAgain
+                buffer.push(1);
             }
 
             BadUnion::Reserved(byte) => {
-                buffer.push(2); // Using standard sequential tags (not 200)
-
-                // For fixed-size values, serialize directly
+                buffer.push(200);
                 buffer.push(*byte);
             }
         }
@@ -240,11 +223,11 @@ impl SimpleSerialize for Foo {
 
         match self {
             Foo::A(val) => {
-                buffer.push(0); // Variant discriminator
+                buffer.push(0);
                 val.serialize(buffer)?;
             }
             Foo::B(val) => {
-                buffer.push(1); // Variant discriminator
+                buffer.push(1);
                 val.serialize(buffer)?;
             }
         }
@@ -304,6 +287,7 @@ impl Merkleize for Foo {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::vec;
 
     #[test]
     fn test_myunion_roundtrip_none() {

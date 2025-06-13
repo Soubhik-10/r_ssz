@@ -28,6 +28,7 @@ where
     }
 }
 
+/// Implements serialization for vector.
 impl<T> SimpleSerialize for Vec<T>
 where
     T: SimpleSerialize + SszTypeInfo,
@@ -48,7 +49,6 @@ where
             let offsets_len = self.len() * crate::BYTES_PER_LENGTH_OFFSET;
             buffer.reserve(offsets_len);
 
-            // First pass - serialize all items to temporary buffers and calculate offsets
             let mut data_parts = Vec::with_capacity(self.len());
             let mut total_data_len = 0;
 
@@ -59,14 +59,12 @@ where
                 data_parts.push(part);
             }
 
-            // Write offsets (pointing to the start of each variable-length element)
             let mut current_offset = offsets_len;
             for part in &data_parts {
                 buffer.extend(&(current_offset as u32).to_le_bytes());
                 current_offset += part.len();
             }
 
-            // Write actual data
             buffer.reserve(total_data_len);
             for part in data_parts {
                 buffer.extend(part);

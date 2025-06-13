@@ -1,7 +1,8 @@
 //! Serializes,deserializes and merkleization of list.
 
 use crate::{
-    BYTES_PER_CHUNK, Merkleize, SSZError, SimpleDeserialize, SimpleSerialize, SszTypeInfo,
+    BYTES_PER_CHUNK, BYTES_PER_LENGTH_OFFSET, Merkleize, SSZError, SimpleDeserialize,
+    SimpleSerialize, SszTypeInfo,
     merkleization::{merkleize, mix_in_length, pack},
 };
 use alloc::vec;
@@ -28,53 +29,33 @@ where
     }
 }
 
+/// Implements serialization for list.
 impl<T, const N: usize> SimpleSerialize for [T; N]
 where
     T: SimpleSerialize + Clone + SszTypeInfo,
 {
-    /// Serializes the list.
     fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
         let start_len = buffer.len();
-        if T::is_fixed_size() {
-            // Fixed-size serialization (direct concatenation)
-            let fixed_size = T::fixed_size().ok_or(SSZError::InvalidByte)?;
-            let expected_len = N * fixed_size;
-            buffer.reserve(expected_len);
 
+        if T::is_fixed_size() {
             for item in self.iter() {
                 item.serialize(buffer)?;
             }
-
-            if buffer.len() - start_len != expected_len {
-                return Err(SSZError::InvalidLength {
-                    expected: expected_len,
-                    got: buffer.len() - start_len,
-                });
-            }
         } else {
-            // Variable-size serialization (offset-based)
-            let offsets_len = N * crate::BYTES_PER_LENGTH_OFFSET;
-            buffer.reserve(offsets_len);
-
-            // First pass: collect serialized items and calculate offsets
-            let mut data_parts = Vec::with_capacity(N);
-            let mut offsets = Vec::with_capacity(N);
-            let mut total_data_len = 0;
+            let offset_bytes_len = N * BYTES_PER_LENGTH_OFFSET;
+            let mut parts = Vec::with_capacity(N);
 
             for item in self.iter() {
-                let mut part_buffer = Vec::new();
-                item.serialize(&mut part_buffer)?;
-                offsets.push(total_data_len + offsets_len);
-                total_data_len += part_buffer.len();
-                data_parts.push(part_buffer);
+                let mut part = Vec::new();
+                item.serialize(&mut part)?;
+                parts.push(part);
             }
-            // Write offsets
-            for offset in offsets {
-                buffer.extend(&offset.to_le_bytes());
+            let mut offset = offset_bytes_len;
+            for part in &parts {
+                buffer.extend(&(offset as u32).to_le_bytes());
+                offset += part.len();
             }
-
-            // Write data parts
-            for part in data_parts {
+            for part in parts {
                 buffer.extend(part);
             }
         }
@@ -83,15 +64,16 @@ where
     }
 }
 
+/// Implements deserialization for list.
 impl<T, const N: usize> SimpleDeserialize for [T; N]
 where
     T: SimpleDeserialize + Clone + SszTypeInfo,
 {
-    /// Deserializes the list.
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         if T::is_fixed_size() {
-            let size = T::fixed_size().unwrap();
-            let total = N * size;
+            let size = T::fixed_size().ok_or(SSZError::InvalidByte)?;
+            let total = size * N;
+
             if data.len() != total {
                 return Err(SSZError::InvalidLength {
                     expected: total,
@@ -99,45 +81,42 @@ where
                 });
             }
 
-            let mut elements = Vec::with_capacity(N);
+            let mut out_fixed: Vec<T> = Vec::with_capacity(N);
             for i in 0..N {
                 let start = i * size;
                 let end = start + size;
-                let elem = T::deserialize(&data[start..end])?;
-                elements.push(elem);
+                let item = T::deserialize(&data[start..end])?;
+                out_fixed.push(item);
             }
-            elements
+
+            out_fixed
                 .clone()
-                .into_iter()
-                .collect::<Vec<T>>()
                 .try_into()
                 .map_err(|_| SSZError::InvalidLength {
                     expected: N,
-                    got: elements.len(),
+                    got: out_fixed.len(),
                 })
         } else {
-            let offset_size = crate::BYTES_PER_LENGTH_OFFSET;
-            let expected_header = offset_size * N;
-            if data.len() < expected_header {
+            let offset_bytes_len = BYTES_PER_LENGTH_OFFSET * N;
+            if data.len() < offset_bytes_len {
                 return Err(SSZError::InvalidLength {
-                    expected: expected_header,
+                    expected: offset_bytes_len,
                     got: data.len(),
                 });
             }
 
             let mut offsets = Vec::with_capacity(N);
             for i in 0..N {
-                let start = i * offset_size;
-                let end = start + offset_size;
-                let offset_bytes = &data[start..end];
-                let offset = u32::from_le_bytes(offset_bytes.try_into().unwrap()) as usize;
+                let start = i * BYTES_PER_LENGTH_OFFSET;
+                let end = start + BYTES_PER_LENGTH_OFFSET;
+                let offset = u32::from_le_bytes(data[start..end].try_into().unwrap()) as usize;
                 if offset > data.len() {
                     return Err(SSZError::OffsetOutOfBounds);
                 }
                 offsets.push(offset);
             }
 
-            let mut elements = Vec::with_capacity(N);
+            let mut out_var: Vec<T> = Vec::with_capacity(N);
             for i in 0..N {
                 let start = offsets[i];
                 let end = if i + 1 < N {
@@ -148,15 +127,16 @@ where
                 if start > end || end > data.len() {
                     return Err(SSZError::InvalidOffsetRange { start, end });
                 }
-                let elem = T::deserialize(&data[start..end])?;
-                elements.push(elem);
+                let item = T::deserialize(&data[start..end])?;
+                out_var.push(item);
             }
-            elements
-                .to_vec()
+
+            out_var
+                .clone()
                 .try_into()
                 .map_err(|_| SSZError::InvalidLength {
                     expected: N,
-                    got: elements.len(),
+                    got: out_var.len(),
                 })
         }
     }
@@ -226,7 +206,7 @@ mod tests {
     fn test_serialize_deserialize_array_option_u64() {
         let arr: [Option<u64>; 3] = [Some(42), None, Some(99)];
         let mut buffer = vec![];
-        let _ = arr.serialize(&mut buffer);
+        let _ = arr.serialize(&mut buffer).unwrap();
         let deserialized = <[Option<u64>; 3]>::deserialize(&mut buffer).unwrap();
         assert_eq!(arr, deserialized);
     }
@@ -247,6 +227,7 @@ mod tests {
         assert_eq!(a, recovered_a);
 
         let a = [22u8; 333];
+        let mut buffer = vec![];
         a.serialize(&mut buffer).unwrap();
         let recovered_a = <[u8; 333]>::deserialize(&mut buffer).unwrap();
         assert_eq!(a, recovered_a);
