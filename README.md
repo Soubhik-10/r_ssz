@@ -32,7 +32,6 @@ using [`@chainsafe/ssz`](https://github.com/ChainSafe/ssz/tree/master/packages/s
 
 [![Contributors](https://contrib.rocks/image?repo=Soubhik-10/r_ssz&cache-bust=20250612)](https://github.com/Soubhik-10/r_ssz/graphs/contributors)
 
-
 👉 See the [full contributor list](https://github.com/Soubhik-10/r_ssz/graphs/contributors).
 
 ---
@@ -49,7 +48,7 @@ using [`@chainsafe/ssz`](https://github.com/ChainSafe/ssz/tree/master/packages/s
 Add to `Cargo.toml`:
 
 ```toml
-r_ssz = "0.1.1"
+r_ssz = "0.1.2"
 
 
 ```
