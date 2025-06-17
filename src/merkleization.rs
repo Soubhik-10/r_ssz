@@ -30,6 +30,14 @@ pub fn chunk_count(ty: SSZType) -> usize {
     }
 }
 
+/// Mixes in the auxiliary root (like a bitvector) into the Merkle root.
+pub fn mix_in_aux(root: B256, aux: B256) -> B256 {
+    let mut hasher = Sha256::new();
+    hasher.update(root);
+    hasher.update(aux);
+    B256::from_slice(&hasher.finalize())
+}
+
 /// Packs serialized basic values into 32-byte chunks with right-padding.
 pub fn pack(bytes: &[u8]) -> Vec<[u8; BYTES_PER_CHUNK]> {
     let mut out = Vec::new();

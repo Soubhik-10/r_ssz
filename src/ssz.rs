@@ -21,11 +21,23 @@ pub trait SszTypeInfo {
     /// If Some(size), then type is fixed-size with known size in bytes.
     /// If None, then it's variable-size (e.g. Vec<u8>, String, etc).
     fn is_fixed_size() -> bool;
+
     /// If fixed-size, returns the size in bytes.
     fn fixed_size() -> Option<usize>;
+
     /// Returns true if this type is a basic type (e.g. u8, u16, etc).
     fn is_basic_type() -> bool {
         false
+    }
+
+    /// Fn to determine stable container
+    fn is_stable_container() -> bool {
+        false
+    }
+
+    /// Size of stable container
+    fn stable_container_size() -> usize {
+        0
     }
 }
 
