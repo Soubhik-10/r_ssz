@@ -27,6 +27,22 @@ impl<const N: usize> BitVector<N> {
         }
     }
 
+    pub fn get(&self, index: usize) -> Option<bool> {
+        self.bits.get(index).copied()
+    }
+
+    pub fn len(&self) -> usize {
+        N
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.bits.is_empty()
+    }
+
+    pub fn as_bits(&self) -> &[bool] {
+        &self.bits
+    }
+
     pub fn set(&mut self, index: usize, value: bool) -> Result<(), SSZError> {
         if index >= N {
             return Err(SSZError::InvalidLength {
@@ -36,6 +52,18 @@ impl<const N: usize> BitVector<N> {
         }
         self.bits[index] = value;
         Ok(())
+    }
+
+    pub fn from_bools(bools: &[bool]) -> Result<Self, SSZError> {
+        if bools.len() != N {
+            return Err(SSZError::InvalidLength {
+                expected: N,
+                got: bools.len(),
+            });
+        }
+        Ok(Self {
+            bits: bools.to_vec(),
+        })
     }
 }
 
