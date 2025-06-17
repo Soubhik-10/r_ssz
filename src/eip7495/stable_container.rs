@@ -78,7 +78,7 @@ impl SimpleSerialize for MyStableContainer {
         let total_len: usize =
             fixed_lengths.iter().sum::<usize>() + variable_lengths.iter().sum::<usize>();
 
-        if total_len >= 1 << (BYTES_PER_LENGTH_OFFSET * BITS_PER_BYTE) {
+        if total_len as u64 >= 1u64 << (BYTES_PER_LENGTH_OFFSET * BITS_PER_BYTE) {
             return Err(SSZError::OffsetOutOfBounds);
         }
 
@@ -117,7 +117,7 @@ impl SimpleSerialize for MyStableContainer {
 impl SimpleDeserialize for MyStableContainer {
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         const NUM_FIELDS: usize = 3;
-        const BITVECTOR_LEN: usize = N.div_ceil(8);
+        const BITVECTOR_LEN: usize = (N + 7) / 8;
         // Step 1: Deserialize bitvector and validate extra bits
         let mut cursor = 0;
         let bitvector = {
