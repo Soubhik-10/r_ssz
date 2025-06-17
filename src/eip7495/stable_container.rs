@@ -117,7 +117,7 @@ impl SimpleSerialize for MyStableContainer {
 impl SimpleDeserialize for MyStableContainer {
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         const NUM_FIELDS: usize = 3;
-        const BITVECTOR_LEN: usize = (N + 7) / 8;
+        const BITVECTOR_LEN: usize = N.div_ceil(8);
         // Step 1: Deserialize bitvector and validate extra bits
         let mut cursor = 0;
         let bitvector = {
