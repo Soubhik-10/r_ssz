@@ -1,3 +1,5 @@
+//! Contains serialization,deserialization and merkleization for `Container[N]`
+
 use crate::ssz::SszTypeInfo;
 use crate::{BITS_PER_BYTE, BYTES_PER_LENGTH_OFFSET};
 use crate::{
@@ -16,6 +18,7 @@ pub struct MyStableContainer {
 
 pub const N: usize = 4;
 
+/// Serializes `MyStableContainer` as per Eip-7495 specs
 impl SimpleSerialize for MyStableContainer {
     fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SSZError> {
         // Create the bitvector
@@ -110,45 +113,48 @@ impl SimpleSerialize for MyStableContainer {
     }
 }
 
+/// Deserializes `MyStableContainer` as per Eip-7495 specs
 impl SimpleDeserialize for MyStableContainer {
     fn deserialize(data: &[u8]) -> Result<Self, SSZError> {
         const NUM_FIELDS: usize = 3;
-
+        const BITVECTOR_LEN: usize = N.div_ceil(8);
         // Step 1: Deserialize bitvector and validate extra bits
         let mut cursor = 0;
         let bitvector = {
-            let bv = BitVector::<N>::deserialize(&data[cursor..])?;
-            cursor += N.div_ceil(8); // consume bits
-            // Validate unused bits
+            let bv = BitVector::<N>::deserialize(&data[cursor..cursor + BITVECTOR_LEN])?;
+            cursor += BITVECTOR_LEN;
+
+            // Validate unused bits beyond NUM_FIELDS are false
             for i in NUM_FIELDS..N {
                 if bv.get(i).unwrap_or(false) {
                     return Err(SSZError::InvalidBitvector);
                 }
             }
+
             bv
         };
-
         // Step 2: Deserialize fixed-size fields based on presence
         let mut a = None;
         let mut b = None;
         let mut c = None;
 
         if bitvector.get(0).unwrap_or(false) {
-            a = Some(u32::deserialize(&data[cursor..])?);
+            a = Some(u32::deserialize(&data[cursor..cursor + 4])?);
             cursor += 4;
         }
         if bitvector.get(1).unwrap_or(false) {
-            b = Some(bool::deserialize(&data[cursor..])?);
+            b = Some(bool::deserialize(&data[cursor..cursor + 1])?);
             cursor += 1;
         }
         if bitvector.get(2).unwrap_or(false) {
-            c = Some(u64::deserialize(&data[cursor..])?);
+            c = Some(u64::deserialize(&data[cursor..cursor + 8])?);
         }
 
         Ok(Self { a, b, c })
     }
 }
 
+/// Merkelizes `MyStableContainer` as per Eip-7495 specs
 impl Merkleize for MyStableContainer {
     fn hash_tree_root(&self) -> Result<B256, SSZError> {
         // Step 1: hash each field or use default
@@ -168,13 +174,13 @@ impl Merkleize for MyStableContainer {
         let field_hashes = alloc::vec![a_hash, b_hash, c_hash];
         let hashes: Vec<[u8; 32]> = field_hashes
             .into_iter()
-            .map(|res| res.unwrap().into()) // unwrap() panics on error, into() converts to [u8; 32]
+            .map(|res| res.unwrap().into())
             .collect();
         // Step 2: compute merkle root of fields
         let merkle_root = merkleize(&hashes, None);
 
         // Step 3: construct active fields bitvector
-        let mut bits = BitVector::<3>::default(); // or a custom impl
+        let mut bits = BitVector::<3>::default();
         if self.a.is_some() {
             bits.set(0, true).unwrap();
         }
@@ -193,5 +199,78 @@ impl Merkleize for MyStableContainer {
 
     fn chunk_count() -> usize {
         3
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{BitVector, SimpleSerialize};
+
+    #[test]
+    fn test_serialize_deserialize_empty() {
+        let container = MyStableContainer {
+            a: None,
+            b: None,
+            c: None,
+        };
+
+        let mut buffer = Vec::new();
+        container.serialize(&mut buffer).unwrap();
+
+        let expected_bitvector = BitVector::<4>::from_bools(&[false, false, false, false]).unwrap();
+        let mut expected = Vec::new();
+        expected_bitvector.serialize(&mut expected).unwrap();
+
+        assert_eq!(buffer, expected);
+
+        let deserialized = MyStableContainer::deserialize(&buffer).unwrap();
+        assert_eq!(deserialized, container);
+    }
+
+    #[test]
+    fn test_serialize_deserialize_all_fields() {
+        let container = MyStableContainer {
+            a: Some(42),
+            b: Some(true),
+            c: Some(1000),
+        };
+
+        let mut buffer = Vec::new();
+        container.serialize(&mut buffer).unwrap();
+        let expected_bitvector = BitVector::<4>::from_bools(&[true, true, true, false]).unwrap();
+        let mut expected = Vec::new();
+        expected_bitvector.serialize(&mut expected).unwrap();
+        let _ = 42u32.serialize(&mut expected);
+        let _ = true.serialize(&mut expected);
+        let _ = 1000u64.serialize(&mut expected);
+        assert_eq!(buffer, expected);
+
+        let deserialized = MyStableContainer::deserialize(&buffer).unwrap();
+        assert_eq!(deserialized, container);
+    }
+
+    #[test]
+    fn test_serialize_deserialize_partial_fields() {
+        let container = MyStableContainer {
+            a: Some(123),
+            b: None,
+            c: Some(456),
+        };
+
+        let mut buffer = Vec::new();
+        container.serialize(&mut buffer).unwrap();
+
+        let expected_bitvector = BitVector::<4>::from_bools(&[true, false, true, false]).unwrap();
+        let mut expected = Vec::new();
+        expected_bitvector.serialize(&mut expected).unwrap();
+
+        expected.extend_from_slice(&123u32.to_le_bytes());
+        expected.extend_from_slice(&456u64.to_le_bytes());
+
+        assert_eq!(buffer, expected);
+
+        let deserialized = MyStableContainer::deserialize(&buffer).unwrap();
+        assert_eq!(deserialized, container);
     }
 }
