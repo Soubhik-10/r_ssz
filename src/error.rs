@@ -47,6 +47,9 @@ pub enum SSZError {
     #[error("{reason} for {selector}")]
     InvalidSelector { reason: String, selector: usize },
 
+    #[error("Invalid bitvector")]
+    InvalidBitvector,
+
     #[error("Unknown error occurred")]
     Unknown,
 }
