@@ -118,7 +118,7 @@ impl SimpleDeserialize for MyStableContainer {
         let mut cursor = 0;
         let bitvector = {
             let bv = BitVector::<N>::deserialize(&data[cursor..])?;
-            cursor += (N + 7) / 8; // consume bits
+            cursor += N.div_ceil(8); // consume bits
             // Validate unused bits
             for i in NUM_FIELDS..N {
                 if bv.get(i).unwrap_or(false) {
