@@ -21,5 +21,3 @@ pub mod fixed_byte;
 pub mod container;
 
 pub mod fixed_vectors;
-
-pub mod stable_container;
