@@ -52,3 +52,13 @@ r_ssz = "0.1.2"
 
 
 ```
+
+### Experimental features
+
+| EIP                                                  | Status                 |
+| ---------------------------------------------------- | ---------------------- |
+| [EIP-7495](https://eips.ethereum.org/EIPS/eip-7495>) | Tested and Implemented |
+| [EIP-7916](https://eips.ethereum.org/EIPS/eip-7916>) | In Progress            |
+| [EIP-7688](https://eips.ethereum.org/EIPS/eip-7688>) | In Progress            |
+
+---
