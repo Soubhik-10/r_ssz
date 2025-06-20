@@ -137,3 +137,22 @@ pub enum SSZType {
     VectorComposite { count: usize },
     Container { field_count: usize },
 }
+
+pub fn merkleize_progressive_list(
+    chunks: &[[u8; 32]],
+    base_size: usize,
+    scale: usize,
+) -> Result<B256, SSZError> {
+    if chunks.len() <= base_size {
+        let mut padded = chunks.to_vec();
+        while padded.len() < base_size {
+            padded.push([0u8; 32]);
+        }
+        return Ok(mix_in_aux(merkleize(&padded, None)?, B256::ZERO));
+    }
+
+    let (subtree, rest) = chunks.split_at(base_size);
+    let subtree_root = merkleize(subtree, None)?;
+    let rest_root = merkleize_progressive_list(rest, base_size * scale, scale)?;
+    Ok(mix_in_aux(subtree_root, rest_root))
+}

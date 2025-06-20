@@ -346,7 +346,7 @@ mod tests {
                 assert_eq!(selector, 200);
                 assert_eq!(reason, "Selector above 127 is reserved");
             }
-            other => panic!("Expected InvalidSelector error, got {:?}", other),
+            other => panic!("Expected InvalidSelector error, got {other:?}"),
         }
     }
 

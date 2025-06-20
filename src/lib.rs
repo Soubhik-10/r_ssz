@@ -22,3 +22,6 @@ pub mod merkleization;
 
 pub mod eip7495;
 pub use eip7495::*;
+
+pub mod eip7916;
+pub use eip7916::*;
