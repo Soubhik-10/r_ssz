@@ -1,3 +1,5 @@
+//! Contains serialization,deserialization amd merkleization for ssz compatible list types.
+
 use crate::{
     Merkleize, SSZError, SimpleDeserialize, SimpleSerialize, SszTypeInfo,
     merkleization::{merkleize, mix_in_length, pack},
@@ -10,7 +12,8 @@ use core::ops::{Deref, DerefMut};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct List<T, const N: usize> {
     elements: Vec<T>,
-    _phantom: PhantomData<[T; N]>, // enforce max length at compile time
+    // enforce max length at compile time
+    _phantom: PhantomData<[T; N]>,
 }
 
 impl<T, const N: usize> List<T, N> {
@@ -67,6 +70,7 @@ where
     }
 }
 
+/// Serializes a ssz compatible list
 impl<T, const N: usize> SimpleSerialize for List<T, N>
 where
     T: SimpleSerialize + SszTypeInfo,
@@ -82,6 +86,7 @@ where
     }
 }
 
+/// Deserializes a ssz compatible list
 impl<T, const N: usize> SimpleDeserialize for List<T, N>
 where
     T: SimpleDeserialize + SszTypeInfo,
@@ -101,6 +106,7 @@ where
     }
 }
 
+/// Merkleizes a ssz compatible list
 impl<T, const N: usize> Merkleize for List<T, N>
 where
     T: Merkleize + SimpleSerialize + SszTypeInfo,
@@ -126,7 +132,7 @@ where
 mod tests {
     use super::List;
     use crate::{Merkleize, SimpleDeserialize, SimpleSerialize};
-    
+    use alloc::vec;
     use alloy_primitives::{
         B256,
         hex::{self, FromHex},

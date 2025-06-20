@@ -1,3 +1,7 @@
+//! Implements the serialization and merkleization of eip-7495 using spec tests
+///
+/// See: <https://eips.ethereum.org/EIPS/eip-7916>
+///
 use alloc::vec::Vec;
 use alloy_primitives::B256;
 
@@ -25,6 +29,7 @@ impl<T> ProgressiveList<T> {
     }
 }
 
+/// Serializes a progressive list
 impl<T> SimpleSerialize for ProgressiveList<T>
 where
     T: SimpleSerialize + SszTypeInfo,
@@ -34,6 +39,7 @@ where
     }
 }
 
+/// Desrializes a progressive list
 impl<T> SimpleDeserialize for ProgressiveList<T>
 where
     T: SimpleDeserialize + SszTypeInfo,
@@ -44,6 +50,7 @@ where
     }
 }
 
+/// Merkleizes a progressive list
 impl<T> Merkleize for ProgressiveList<T>
 where
     T: Merkleize + SszTypeInfo + SimpleSerialize,
