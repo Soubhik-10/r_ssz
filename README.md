@@ -58,7 +58,9 @@ r_ssz = "0.1.2"
 | EIP                                                  | Status                 |
 | ---------------------------------------------------- | ---------------------- |
 | [EIP-7495](https://eips.ethereum.org/EIPS/eip-7495>) | Tested and Implemented |
-| [EIP-7916](https://eips.ethereum.org/EIPS/eip-7916>) | In Progress            |
+| [EIP-7916](https://eips.ethereum.org/EIPS/eip-7916>) | Tested and Implemented |
 | [EIP-7688](https://eips.ethereum.org/EIPS/eip-7688>) | In Progress            |
 
 ---
+
+### For now we are posponing this release as these are extremely experimental and need to be more tested. Even the EIPs are not finalized and by the look of how things are going Pureth and these EIPs are not going to be implemented anytime sooner than Amsterdam EL fork. We will try to release these along with other related EIPs and the completed version of this crate sometimes arounf the Fusaka release. Thanks for reading this. Have a great day :)
