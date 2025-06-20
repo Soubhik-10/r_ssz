@@ -1,5 +1,5 @@
 //! Contains the base modules.
-#![no_std]
+// #![no_std]
 #![allow(unused_assignments)]
 extern crate alloc;
 
